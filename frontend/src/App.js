@@ -6,7 +6,7 @@ import Events from "./Events";
 const App = () => {
   return (
     <Router>
-      <div>
+      <div style={{ textAlign: "center", marginTop: "20%" }}>
         <h1>Event Manager</h1>
         <Routes>
 

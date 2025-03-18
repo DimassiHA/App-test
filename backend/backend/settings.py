@@ -40,11 +40,11 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
-    "corsheaders",  
-    "api",  # Make sure this line is included
+    "corsheaders",
+    "api",
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True  # Allows all frontend requests (for development)
+CORS_ALLOW_ALL_ORIGINS = True
 
 
 MIDDLEWARE = [
