@@ -8,7 +8,7 @@ router = DefaultRouter()
 router.register(r'events', EventViewSet)  # Your API endpoint
 
 urlpatterns = [
-    path('/', include(router.urls)),
+    path('/', include(api.urls)),
     path("admin/", admin.site.urls),
 
 ]
