@@ -6,8 +6,9 @@ import Events from "./Events";
 const App = () => {
   return (
     <Router>
-      <div>
+      <div style={{ textAlign: "center", marginTop: "20%" }}>
         <h1>Event Manager</h1>
+        <p>Get started by logging in or signing up!</p>
         <Routes>
 
           <Route path="/events" element={<Events />} />
@@ -19,3 +20,4 @@ const App = () => {
 };
 
 export default App;
+
