@@ -12,6 +12,14 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 
+#added by s from tech with tim video
+from datetime import timedelta
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+#
+
 from django import middleware
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -27,14 +35,26 @@ SECRET_KEY = 'django-insecure-+eq66j1aa1w8_zkxe4fkym(8gp2(c+q$3ab9ko$f4)dcqu$nd)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
+
+
+
+#added by s from tech with tim video
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
     ],
 }
 
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+}
+#
 # Application definition
 
 INSTALLED_APPS = [
@@ -44,13 +64,14 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "api",
     "rest_framework",
     "corsheaders",  
-    "api",  # Make sure this line is included
+      # Make sure this line is included
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True  # Allows all frontend requests (for development)
-
+CORS_ALLOWS_CREDENTIALS = True
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
@@ -61,6 +82,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
 ]
 
 
