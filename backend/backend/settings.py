@@ -66,11 +66,11 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "api",
     "rest_framework",
-    "corsheaders",  
-      # Make sure this line is included
+    "corsheaders",
+
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True  # Allows all frontend requests (for development)
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWS_CREDENTIALS = True
 
 MIDDLEWARE = [
@@ -159,3 +159,5 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AUTH_USER_MODEL = 'api.CustomUser'

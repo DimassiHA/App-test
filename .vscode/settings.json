@@ -1,5 +1,7 @@
 {
     "cSpell.words": [
-        "corsheaders"
+        "corsheaders",
+        "simplejwt",
+        "viewsets"
     ]
 }

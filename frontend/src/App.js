@@ -1,23 +1,15 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Events from "./Events";
+import { Routes, Route, Navigate } from "react-router-dom";
+import AdminLogin from "./components/Admin/AdminLogin";
+import Dashboard from "./components/Admin/Dashboard";
 
-
-const App = () => {
+function App() {
   return (
-    <Router>
-      <div style={{ textAlign: "center", marginTop: "20%" }}>
-        <h1>Event Manager</h1>
-        <p>Get started by logging in or signing up!</p>
-        <Routes>
-
-          <Route path="/events" element={<Events />} />
-
-        </Routes>
-      </div>
-    </Router>
+    <Routes>
+      <Route path="/admin" element={<AdminLogin />} />
+      <Route path="/admin/dashboard" element={<Dashboard />} />
+      <Route path="*" element={<Navigate to="/admin" />} />
+    </Routes>
   );
-};
+}
 
 export default App;
-
