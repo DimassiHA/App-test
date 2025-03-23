@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CustomUser
+from .models import CustomUser ,Client ,ServiceOwner, ServicePicture
 
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -23,4 +23,64 @@ class CustomUserSerializer(serializers.ModelSerializer):
             validated_data['is_app_admin'] = False 
 
         user = CustomUser.objects.create_user(**validated_data)
+        return user
+    
+
+class ClientRegisterSerializer(serializers.ModelSerializer):
+    gender = serializers.ChoiceField(choices=(('male', 'Male'), ('female', 'Female')),write_only=True)
+    profile_picture = serializers.ImageField(required=False)
+
+    class Meta:
+        model = CustomUser
+        fields = ['first_name', 'last_name','username', 'email', 'password', 'phone_number',"region","birth_date","gender",'profile_picture']
+        extra_kwargs = {'password': {'write_only': True}}
+
+    def create(self, validated_data):
+        gender = validated_data.pop('gender')  # Extract gender for Client model
+        profile_picture = validated_data.pop('profile_picture', None)
+        user = CustomUser.objects.create_user(**validated_data, user_type='client')
+        Client.objects.create(user=user, gender=gender , profile_picture=profile_picture)  # Create associated Client profile
+        return user
+
+class ServiceOwnerRegisterSerializer(serializers.ModelSerializer):
+    profile_picture = serializers.ImageField(required=False)
+    business_name = serializers.CharField()
+    description = serializers.CharField()
+    service_pictures = serializers.ListField(
+        child=serializers.ImageField(),
+        write_only=True,
+        required=True
+    )
+    class Meta:
+        model = CustomUser
+        fields = [
+            'first_name', 'last_name', 'username', 'email', 'password', 
+            'phone_number', 'region', 'birth_date', 'profile_picture', 
+            'business_name', 'description', 'service_pictures'
+        ]
+        extra_kwargs = {'password': {'write_only': True}}
+
+    def validate_service_pictures(self, value):
+        if len(value) < 1:
+            raise serializers.ValidationError("At least one service picture is required.")
+        return value
+
+    def create(self, validated_data):
+        profile_picture = validated_data.pop('profile_picture', None)
+        business_name = validated_data.pop('business_name')
+        description = validated_data.pop('description')
+        service_pictures = validated_data.pop('service_pictures')
+        
+        # Create the User and ServiceOwner
+        user = CustomUser.objects.create_user(**validated_data, user_type='service_owner')
+        service_owner = ServiceOwner.objects.create(
+            user=user, 
+            profile_picture=profile_picture, 
+            business_name=business_name,
+            description=description
+        ) 
+        # Save service pictures
+        for picture in service_pictures:
+            ServicePicture.objects.create(service_owner=service_owner, image=picture)
+        
         return user
