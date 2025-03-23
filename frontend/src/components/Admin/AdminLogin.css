@@ -17,6 +17,10 @@
   .login-box h2 {
     margin-bottom: 20px;
   }
+  .error-message {
+    color: red;
+    margin-bottom: 10px;
+  }
   
   .error-message {
     color: red;
