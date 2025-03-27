@@ -46,7 +46,6 @@ ALLOWED_HOSTS = ["*"]
 
 
 
-#added by s from tech with tim video
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -143,6 +142,10 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+AUTHENTICATION_BACKENDS = (
+    'api.backends.EmailOrPhoneNumberBackend',  # Custom authentication backend(username,email or phone number)
+    'django.contrib.auth.backends.ModelBackend',  
+)
 
 
 # Internationalization

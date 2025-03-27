@@ -7,38 +7,22 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework import status
-from .models import CustomUser
+from rest_framework import status , generics 
+from .models import CustomUser , Client , ServiceOwner
 from .serializers import  MyTokenObtainPairSerializer
 import logging
-
 from .serializers import CustomUserSerializer ,ClientRegisterSerializer,ServiceOwnerRegisterSerializer
 
 
-class ClientRegistrationView(APIView):
-    authentication_classes = []  # Disable authentication
+class ClientRegistrationView(generics.CreateAPIView):
+    queryset = Client.objects.all()
+    serializer_class = ClientRegisterSerializer
     permission_classes = [AllowAny]
 
-    def post(self, request):
-        serializer = ClientRegisterSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"message": "Client registered successfully!"}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-class ServiceOwnerRegistrationView(APIView):
-    authentication_classes = []  # Disable authentication
+class ServiceOwnerRegistrationView(generics.CreateAPIView):
+    queryset = ServiceOwner.objects.all()
+    serializer_class = ServiceOwnerRegisterSerializer
     permission_classes = [AllowAny]
-
-    def post(self, request):
-        serializer = ServiceOwnerRegisterSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"message": "Service Owner registered successfully!"}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-
 
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
@@ -50,6 +34,7 @@ class IsAppAdmin(BasePermission):
 class IsSuperuser(BasePermission):
     def has_permission(self, request, view):
         return bool(request.user and request.user.is_authenticated and request.user.is_superuser)
+
 class CreateUserView(APIView):
     permission_classes = [IsSuperuser]
 
@@ -114,3 +99,33 @@ class UserListView(APIView):
 
         serializer = CustomUserSerializer(users, many=True)
         return Response(serializer.data)
+
+from django.contrib.auth.forms import AuthenticationForm
+
+class CustomLoginView(View):
+    def get(self, request, *args, **kwargs):
+        # Return an empty form when accessed via GET
+        form = AuthenticationForm()
+        return self.render_to_response({'form': form})
+
+    def post(self, request, *args, **kwargs):
+
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None:
+            login(request, user)
+
+            return JsonResponse({
+                'message': 'Login successful',
+                'user_type': user.user_type,
+                'username': user.username,
+                'email': user.email,
+            })
+        else:
+            # Return an error message if authentication fails
+            return JsonResponse({'error': 'Invalid username or password'}, status=400)
+
+    def render_to_response(self, context, **kwargs):
+        return JsonResponse(context)
