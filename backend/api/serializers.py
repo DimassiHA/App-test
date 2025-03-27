@@ -99,3 +99,7 @@ class ServiceOwnerRegisterSerializer(serializers.ModelSerializer):
             ServicePicture.objects.create(service_owner=service_owner, image=picture)
         
         return user
+
+class LoginSerializer(serializers.Serializer):
+    login_input = serializers.CharField()  # Single field for email, phone number, or username
+    password = serializers.CharField(write_only=True)  
