@@ -99,6 +99,7 @@ class ServiceOwnerRegisterSerializer(serializers.ModelSerializer):
             ServicePicture.objects.create(service_owner=service_owner, image=picture)
         
         return user
+<<<<<<< HEAD
 
 class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -111,3 +112,28 @@ class PasswordResetVerifySerializer(serializers.Serializer):
 class PasswordResetChangeSerializer(serializers.Serializer):
     token = serializers.CharField()
     new_password = serializers.CharField(write_only=True)
+=======
+<<<<<<< HEAD
+
+class LoginSerializer(serializers.Serializer):
+
+    username = serializers.CharField(max_length=255)
+    password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        username = attrs.get('username')
+        password = attrs.get('password')
+
+        
+        try:
+            user = CustomUser.objects.get(username=username)  
+            if not user.check_password(password):
+                raise serializers.ValidationError('Invalid password')
+        except CustomUser.DoesNotExist:
+            raise serializers.ValidationError('User does not exist')
+
+        return attrs
+
+=======
+>>>>>>> f772450f4d906ded89a1619b55a7d51b9705c7f1
+>>>>>>> 50e58f5987a54b09335efaa0bbe0678f114b4eb3

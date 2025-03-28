@@ -50,7 +50,9 @@ const ClientRegistrationForm = () => {
             });
             setMessage('Registration successful!');
             console.log(response.data); // Log the response from the backend
-            navigate('/'); // Redirect to home after successful registration
+
+            navigate('/login'); // Redirect to home after successful registration
+
         } catch (error) {
             setMessage('Registration failed. Please try again.');
             console.error(error.response.data); // Log the error response
