@@ -2,6 +2,11 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager, Permission
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
+from django.utils import timezone
+from datetime import timedelta
+import random
+
+
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, username, email, password=None, **extra_fields):
@@ -65,3 +70,17 @@ class AdminUser(models.Model):
     def __str__(self):
         return f"Admin: {self.user.username}"
 
+
+class PasswordResetToken(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    token = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+
+    def save(self, *args, **kwargs):
+        if not self.token:
+            self.token = str(random.randint(100000, 999999))  # 6-digit code
+        if not self.expires_at:
+            self.expires_at = timezone.now() + timedelta(minutes=15)  # 15 min expiry
+        super().save(*args, **kwargs)

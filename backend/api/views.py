@@ -1,17 +1,17 @@
+from django.utils import timezone
 from rest_framework import viewsets
-
 from rest_framework.permissions import BasePermission, AllowAny ,IsAuthenticated
-
+from django.core.mail import send_mail
 from django.contrib.auth import authenticate
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework import status
-from .models import CustomUser
-from .serializers import  MyTokenObtainPairSerializer
+from .models import CustomUser , PasswordResetToken
+from .serializers import  MyTokenObtainPairSerializer, PasswordResetRequestSerializer, PasswordResetVerifySerializer
 import logging
-
+from django.conf import settings
 from .serializers import CustomUserSerializer ,ClientRegisterSerializer,ServiceOwnerRegisterSerializer
 
 
@@ -114,3 +114,64 @@ class UserListView(APIView):
 
         serializer = CustomUserSerializer(users, many=True)
         return Response(serializer.data)
+    
+
+
+class PasswordResetRequestView(APIView):
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data['email']
+            try:
+                user = CustomUser.objects.get(email=email)
+                # Create or update reset token
+                token, created = PasswordResetToken.objects.update_or_create(
+                    user=user,
+                    defaults={'is_used': False}
+                )
+                
+                # Send email with verification code
+                send_mail(
+                    'Password Reset Verification Code',
+                    f'Your verification code is: {token.token}\nThis code will expire in 15 minutes.',
+                    settings.DEFAULT_FROM_EMAIL,
+                    [user.email],
+                    fail_silently=False,
+                )
+                
+                return Response({"message": "Verification code sent to your email"}, status=status.HTTP_200_OK)
+            except CustomUser.DoesNotExist:
+                return Response({"error": "User with this email does not exist"}, status=status.HTTP_404_NOT_FOUND)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class PasswordResetVerifyView(APIView):
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        serializer = PasswordResetVerifySerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data['email']
+            token = serializer.validated_data['token']
+            new_password = serializer.validated_data['new_password']
+            
+            try:
+                user = CustomUser.objects.get(email=email)
+                reset_token = PasswordResetToken.objects.filter(
+                    user=user,
+                    token=token,
+                    is_used=False,
+                    expires_at__gte=timezone.now()
+                ).first()
+                
+                if reset_token:
+                    user.set_password(new_password)
+                    user.save()
+                    reset_token.is_used = True
+                    reset_token.save()
+                    return Response({"message": "Password reset successfully"}, status=status.HTTP_200_OK)
+                return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
+            except CustomUser.DoesNotExist:
+                return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

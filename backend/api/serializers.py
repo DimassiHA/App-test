@@ -99,3 +99,15 @@ class ServiceOwnerRegisterSerializer(serializers.ModelSerializer):
             ServicePicture.objects.create(service_owner=service_owner, image=picture)
         
         return user
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+class PasswordResetVerifySerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    token = serializers.CharField(max_length=6)
+    new_password = serializers.CharField(write_only=True)
+
+class PasswordResetChangeSerializer(serializers.Serializer):
+    token = serializers.CharField()
+    new_password = serializers.CharField(write_only=True)
