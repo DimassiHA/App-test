@@ -34,9 +34,6 @@ const Dashboard = () => {
       if (decoded.is_superuser) {
         setIsSuperuser(true); // Set superuser status
         fetchUsers(); // Fetch users when the component mounts
-      } else {
-        // Redirect with a message if the user is not a superuser
-        navigate("/admin?message=You do not have permission to access this page.");
       }
     } else {
       // Redirect to login if no token is found
@@ -198,6 +195,15 @@ const Dashboard = () => {
                 type="checkbox"
                 name="is_app_admin"
                 checked={formData.is_app_admin}
+                onChange={handleCheckboxChange}
+              />
+            </div>
+            <div>
+              <label>Is superuser:</label>
+              <input
+                type="checkbox"
+                name="is_superuser"
+                checked={formData.is_superuser}
                 onChange={handleCheckboxChange}
               />
             </div>
