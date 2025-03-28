@@ -11,8 +11,9 @@ from rest_framework import status , generics
 from .models import CustomUser , Client , ServiceOwner
 from .serializers import  MyTokenObtainPairSerializer
 import logging
-from .serializers import CustomUserSerializer ,ClientRegisterSerializer,ServiceOwnerRegisterSerializer
-
+from .serializers import CustomUserSerializer ,ClientRegisterSerializer,ServiceOwnerRegisterSerializer, LoginSerializer
+from .backends import EmailOrPhoneNumberBackend
+from django.contrib.auth import login
 
 class ClientRegistrationView(generics.CreateAPIView):
     queryset = Client.objects.all()
@@ -100,32 +101,25 @@ class UserListView(APIView):
         serializer = CustomUserSerializer(users, many=True)
         return Response(serializer.data)
 
-from django.contrib.auth.forms import AuthenticationForm
-
-class CustomLoginView(View):
-    def get(self, request, *args, **kwargs):
-        # Return an empty form when accessed via GET
-        form = AuthenticationForm()
-        return self.render_to_response({'form': form})
-
+class CustomLoginView(APIView):
     def post(self, request, *args, **kwargs):
+        serializer = LoginSerializer(data=request.data)
+        if serializer.is_valid():
+            username = serializer.validated_data['username']
+            password = serializer.validated_data['password']
 
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
+            # Use the custom authentication backend for authentication
+            backend = EmailOrPhoneNumberBackend()
 
-        if user is not None:
-            login(request, user)
+            user = backend.authenticate(request, username=username, password=password)
 
-            return JsonResponse({
-                'message': 'Login successful',
-                'user_type': user.user_type,
-                'username': user.username,
-                'email': user.email,
-            })
-        else:
-            # Return an error message if authentication fails
-            return JsonResponse({'error': 'Invalid username or password'}, status=400)
+            if user is not None:
+                login(request, user)
+                return Response({
+                    'user_type': user.user_type,
+                    'message': 'Login successful',
+                })
+            
+            return Response({'error': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
 
-    def render_to_response(self, context, **kwargs):
-        return JsonResponse(context)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
