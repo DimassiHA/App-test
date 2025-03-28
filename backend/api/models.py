@@ -63,7 +63,7 @@ class ServicePicture(models.Model):
 
     def __str__(self):
         return f"Service Picture {self.id} for {self.service_owner.business_name}"
- 
+
 class AdminUser(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name="admin_profile")
     admin_id = models.AutoField(primary_key=True)
