@@ -61,6 +61,7 @@ const ServiceOwnerRegistrationForm = () => {
             setMessage('Registration successful!');
             console.log("Response from backend:", response.data);
             navigate('/login');
+
         } catch (error) {
             setMessage('Registration failed. Please try again.');
             console.error("Error response:", error.response.data);

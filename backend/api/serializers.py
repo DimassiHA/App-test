@@ -99,6 +99,7 @@ class ServiceOwnerRegisterSerializer(serializers.ModelSerializer):
             ServicePicture.objects.create(service_owner=service_owner, image=picture)
         
         return user
+<<<<<<< HEAD
 
 class LoginSerializer(serializers.Serializer):
 
@@ -119,3 +120,5 @@ class LoginSerializer(serializers.Serializer):
 
         return attrs
 
+=======
+>>>>>>> f772450f4d906ded89a1619b55a7d51b9705c7f1

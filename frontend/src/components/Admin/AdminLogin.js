@@ -41,7 +41,9 @@ const AdminLogin = () => {
       navigate("/admin/dashboard");
     } catch (err) {
       console.error("Login error:", err.response?.data);
-      setError("Invalid credentials "); // Display error message
+
+      setError("Invalid credentials or not an admin."); // Display error message
+
     }
   };
 

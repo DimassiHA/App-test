@@ -36,7 +36,6 @@ class IsAppAdmin(BasePermission):
 class IsSuperuser(BasePermission):
     def has_permission(self, request, view):
         return bool(request.user and request.user.is_authenticated and request.user.is_superuser)
-
 class CreateUserView(APIView):
     permission_classes = [IsSuperuser]
 
@@ -100,6 +99,7 @@ class UserListView(APIView):
                 users = users.filter(is_superuser=False, is_app_admin=False)
 
         serializer = CustomUserSerializer(users, many=True)
+
         return Response(serializer.data)
 
 class CustomLoginView(APIView):
@@ -120,8 +120,7 @@ class CustomLoginView(APIView):
                     'user_type': user.user_type,
                     'message': 'Login successful',
                 })
-            
+         
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-

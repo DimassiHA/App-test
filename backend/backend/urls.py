@@ -5,7 +5,9 @@ from django.contrib import admin
 
 from api.views import MyTokenObtainPairView
 
+
 from api.views import AdminLoginView , CreateUserView , ClientRegistrationView , ServiceOwnerRegistrationView , UserListView ,CustomLoginView
+
 
 
 urlpatterns = [
@@ -21,4 +23,5 @@ urlpatterns = [
     path('api/register/client/', ClientRegistrationView.as_view(), name='client_register'),
     path('api/register/service-owner/', ServiceOwnerRegistrationView.as_view(), name='service_owner_register'),
     path('api/login/',CustomLoginView.as_view(),name='login'),
+
 ]
