@@ -101,5 +101,21 @@ class ServiceOwnerRegisterSerializer(serializers.ModelSerializer):
         return user
 
 class LoginSerializer(serializers.Serializer):
-    login_input = serializers.CharField()  # Single field for email, phone number, or username
-    password = serializers.CharField(write_only=True)  
+
+    username = serializers.CharField(max_length=255)
+    password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        username = attrs.get('username')
+        password = attrs.get('password')
+
+        
+        try:
+            user = CustomUser.objects.get(username=username)  
+            if not user.check_password(password):
+                raise serializers.ValidationError('Invalid password')
+        except CustomUser.DoesNotExist:
+            raise serializers.ValidationError('User does not exist')
+
+        return attrs
+
