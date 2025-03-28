@@ -7,14 +7,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
-<<<<<<< HEAD
 from rest_framework import status
 from .models import CustomUser , PasswordResetToken
 from .serializers import  MyTokenObtainPairSerializer, PasswordResetRequestSerializer, PasswordResetVerifySerializer
 import logging
 from django.conf import settings
 from .serializers import CustomUserSerializer ,ClientRegisterSerializer,ServiceOwnerRegisterSerializer
-=======
 from rest_framework import status , generics 
 from .models import CustomUser , Client , ServiceOwner
 from .serializers import  MyTokenObtainPairSerializer
@@ -22,7 +20,7 @@ import logging
 from .serializers import CustomUserSerializer ,ClientRegisterSerializer,ServiceOwnerRegisterSerializer, LoginSerializer
 from .backends import EmailOrPhoneNumberBackend
 from django.contrib.auth import login
->>>>>>> 50e58f5987a54b09335efaa0bbe0678f114b4eb3
+
 
 
 class ClientRegistrationView(generics.CreateAPIView):
@@ -108,7 +106,7 @@ class UserListView(APIView):
                 users = users.filter(is_superuser=False, is_app_admin=False)
 
         serializer = CustomUserSerializer(users, many=True)
-<<<<<<< HEAD
+
         return Response(serializer.data)
     
 
@@ -170,7 +168,6 @@ class PasswordResetVerifyView(APIView):
                 return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
             except CustomUser.DoesNotExist:
                 return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
-=======
 
         return Response(serializer.data)
 
@@ -195,5 +192,3 @@ class CustomLoginView(APIView):
          
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
 
->>>>>>> 50e58f5987a54b09335efaa0bbe0678f114b4eb3
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

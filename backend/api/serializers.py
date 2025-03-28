@@ -5,8 +5,6 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import CustomUser ,Client ,ServiceOwner, ServicePicture
 
 
-
-
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
@@ -99,22 +97,6 @@ class ServiceOwnerRegisterSerializer(serializers.ModelSerializer):
             ServicePicture.objects.create(service_owner=service_owner, image=picture)
         
         return user
-<<<<<<< HEAD
-
-class PasswordResetRequestSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-
-class PasswordResetVerifySerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    token = serializers.CharField(max_length=6)
-    new_password = serializers.CharField(write_only=True)
-
-class PasswordResetChangeSerializer(serializers.Serializer):
-    token = serializers.CharField()
-    new_password = serializers.CharField(write_only=True)
-=======
-<<<<<<< HEAD
-
 class LoginSerializer(serializers.Serializer):
 
     username = serializers.CharField(max_length=255)
@@ -134,6 +116,14 @@ class LoginSerializer(serializers.Serializer):
 
         return attrs
 
-=======
->>>>>>> f772450f4d906ded89a1619b55a7d51b9705c7f1
->>>>>>> 50e58f5987a54b09335efaa0bbe0678f114b4eb3
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+class PasswordResetVerifySerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    token = serializers.CharField(max_length=6)
+    new_password = serializers.CharField(write_only=True)
+
+class PasswordResetChangeSerializer(serializers.Serializer):
+    token = serializers.CharField()
+    new_password = serializers.CharField(write_only=True)
