@@ -63,10 +63,8 @@ const ServiceOwnerRegistrationForm = () => {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
             setMessage('Registration successful!');
-<<<<<<< HEAD
-=======
+
             console.log("Response from backend:", response.data);
->>>>>>> 40b57697b360fb3144ed53da7046ccd07eb78fd6
             navigate('/login');
         } catch (error) {
             setMessage('Registration failed. Please try again.');

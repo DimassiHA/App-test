@@ -8,10 +8,9 @@ from api.views import MyTokenObtainPairView, PasswordResetRequestView, PasswordR
 
 from api.views import AdminLoginView , CreateUserView , ClientRegistrationView , ServiceOwnerRegistrationView , UserListView ,CustomLoginView
 
-<<<<<<< HEAD
-=======
+
 from api.views import AdminLoginView , CreateUserView , ClientRegistrationView , ServiceOwnerRegistrationView , UserListView ,CustomLoginView
->>>>>>> 40b57697b360fb3144ed53da7046ccd07eb78fd6
+
 
 
 urlpatterns = [
@@ -30,8 +29,4 @@ urlpatterns = [
     path('api/register/client/', ClientRegistrationView.as_view(), name='client_register'),
     path('api/register/service-owner/', ServiceOwnerRegistrationView.as_view(), name='service_owner_register'),
     path('api/login/',CustomLoginView.as_view(),name='login'),
-<<<<<<< HEAD
-
-=======
->>>>>>> 40b57697b360fb3144ed53da7046ccd07eb78fd6
 ]
