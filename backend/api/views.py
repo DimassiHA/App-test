@@ -8,12 +8,14 @@ from rest_framework.views import APIView
 from rest_framework.generics import CreateAPIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
+
 from rest_framework import status
 from .models import CustomUser , PasswordResetToken
 from .serializers import  MyTokenObtainPairSerializer, PasswordResetRequestSerializer, PasswordResetVerifySerializer,CustomTokenObtainPairSerializer
 import logging
 from django.conf import settings
 from .serializers import CustomUserSerializer ,ClientRegisterSerializer,ServiceOwnerRegisterSerializer,ClientProfileSerializer,ServiceOwnerProfileSerializer
+
 from rest_framework import status , generics 
 from .models import CustomUser , Client , ServiceOwner
 from .serializers import  MyTokenObtainPairSerializer
@@ -21,6 +23,7 @@ import logging
 from .serializers import CustomUserSerializer ,ClientRegisterSerializer,ServiceOwnerRegisterSerializer, LoginSerializer
 from .backends import EmailOrPhoneNumberBackend
 from django.contrib.auth import login
+
 
 
 class ClientRegistrationView(CreateAPIView):
@@ -46,7 +49,6 @@ class ServiceOwnerRegistrationView(CreateAPIView):
         service_owner = user.service_owner_profile
         response_serializer = ServiceOwnerProfileSerializer(service_owner)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
 
@@ -60,6 +62,7 @@ class IsAppAdmin(BasePermission):
 class IsSuperuser(BasePermission):
     def has_permission(self, request, view):
         return bool(request.user and request.user.is_authenticated and request.user.is_superuser)
+
 class CreateUserView(APIView):
     permission_classes = [IsSuperuser]
 
@@ -123,6 +126,7 @@ class UserListView(APIView):
                 users = users.filter(is_superuser=False, is_app_admin=False)
 
         serializer = CustomUserSerializer(users, many=True)
+
 
         return Response(serializer.data)
     
@@ -188,9 +192,10 @@ class PasswordResetVerifyView(APIView):
 
         return Response(serializer.data)
 
+
+
 class CustomLoginView(APIView):
     permission_classes = [AllowAny] 
-
     def post(self, request, *args, **kwargs):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
@@ -198,8 +203,8 @@ class CustomLoginView(APIView):
             password = serializer.validated_data['password']
 
             
-
             user = authenticate(request, username=username, password=password)
+
 
             if user is not None:
                 login(request, user)
@@ -207,6 +212,7 @@ class CustomLoginView(APIView):
                     'user_type': user.user_type,
                     'message': 'Login successful',
                 })
+
          
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
 

@@ -3,10 +3,12 @@ import axios from "../api";
 import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
-  const navigate = useNavigate();
+  const navigate = useNavigate();  
+
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -54,7 +56,10 @@ const Login = () => {
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="Enter your email, phone, or username"
+
+
+            placeholder="Enter your email, phone number, or username"
+
             required
           />
         </div>
