@@ -5,14 +5,15 @@ from django.core.mail import send_mail
 from django.contrib.auth import authenticate
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.generics import CreateAPIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework import status
 from .models import CustomUser , PasswordResetToken
-from .serializers import  MyTokenObtainPairSerializer, PasswordResetRequestSerializer, PasswordResetVerifySerializer
+from .serializers import  MyTokenObtainPairSerializer, PasswordResetRequestSerializer, PasswordResetVerifySerializer,CustomTokenObtainPairSerializer
 import logging
 from django.conf import settings
-from .serializers import CustomUserSerializer ,ClientRegisterSerializer,ServiceOwnerRegisterSerializer
+from .serializers import CustomUserSerializer ,ClientRegisterSerializer,ServiceOwnerRegisterSerializer,ClientProfileSerializer,ServiceOwnerProfileSerializer
 from rest_framework import status , generics 
 from .models import CustomUser , Client , ServiceOwner
 from .serializers import  MyTokenObtainPairSerializer
@@ -22,19 +23,35 @@ from .backends import EmailOrPhoneNumberBackend
 from django.contrib.auth import login
 
 
-
-class ClientRegistrationView(generics.CreateAPIView):
-    queryset = Client.objects.all()
+class ClientRegistrationView(CreateAPIView):
     serializer_class = ClientRegisterSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [AllowAny] 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        
+        client = user.client_profile
+        response_serializer = ClientProfileSerializer(client)
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
-class ServiceOwnerRegistrationView(generics.CreateAPIView):
-    queryset = ServiceOwner.objects.all()
+class ServiceOwnerRegistrationView(CreateAPIView):
     serializer_class = ServiceOwnerRegisterSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [AllowAny] 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        
+        service_owner = user.service_owner_profile
+        response_serializer = ServiceOwnerProfileSerializer(service_owner)
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
 
 class IsAppAdmin(BasePermission):
     def has_permission(self, request, view):
@@ -172,16 +189,17 @@ class PasswordResetVerifyView(APIView):
         return Response(serializer.data)
 
 class CustomLoginView(APIView):
+    permission_classes = [AllowAny] 
+
     def post(self, request, *args, **kwargs):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
             username = serializer.validated_data['username']
             password = serializer.validated_data['password']
 
-            # Use the custom authentication backend for authentication
-            backend = EmailOrPhoneNumberBackend()
+            
 
-            user = backend.authenticate(request, username=username, password=password)
+            user = authenticate(request, username=username, password=password)
 
             if user is not None:
                 login(request, user)
