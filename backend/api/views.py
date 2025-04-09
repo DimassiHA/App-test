@@ -14,15 +14,18 @@ from .models import CustomUser , PasswordResetToken
 from .serializers import  MyTokenObtainPairSerializer, PasswordResetRequestSerializer, PasswordResetVerifySerializer,CustomTokenObtainPairSerializer
 import logging
 from django.conf import settings
+
 from .serializers import CustomUserSerializer ,ClientRegisterSerializer,ServiceOwnerRegisterSerializer,ClientProfileSerializer,ServiceOwnerProfileSerializer
 
 from rest_framework import status , generics 
+
 from .models import CustomUser , Client , ServiceOwner
 from .serializers import  MyTokenObtainPairSerializer
 import logging
 from .serializers import CustomUserSerializer ,ClientRegisterSerializer,ServiceOwnerRegisterSerializer, LoginSerializer
 from .backends import EmailOrPhoneNumberBackend
 from django.contrib.auth import login
+
 
 
 
@@ -49,6 +52,7 @@ class ServiceOwnerRegistrationView(CreateAPIView):
         service_owner = user.service_owner_profile
         response_serializer = ServiceOwnerProfileSerializer(service_owner)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
 
@@ -58,7 +62,6 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 class IsAppAdmin(BasePermission):
     def has_permission(self, request, view):
         return bool(request.user and request.user.is_authenticated and request.user.is_app_admin)
-    
 class IsSuperuser(BasePermission):
     def has_permission(self, request, view):
         return bool(request.user and request.user.is_authenticated and request.user.is_superuser)
@@ -106,7 +109,7 @@ class AdminLoginView(APIView):
             }, status=status.HTTP_200_OK)
 
         return Response({"error": "Invalid credentials or not an admin"}, status=status.HTTP_401_UNAUTHORIZED)
-    
+
 
 
 
@@ -123,18 +126,17 @@ class UserListView(APIView):
             elif role == "admin":
                 users = users.filter(is_app_admin=True)
             elif role == "client":
-                users = users.filter(is_superuser=False, is_app_admin=False)
+                users = users.filter(is_superuser=False, is_app_admin=False )
 
         serializer = CustomUserSerializer(users, many=True)
 
-
         return Response(serializer.data)
-    
+
 
 
 class PasswordResetRequestView(APIView):
     permission_classes = [AllowAny]
-    
+
     def post(self, request):
         serializer = PasswordResetRequestSerializer(data=request.data)
         if serializer.is_valid():
@@ -146,7 +148,7 @@ class PasswordResetRequestView(APIView):
                     user=user,
                     defaults={'is_used': False}
                 )
-                
+
                 # Send email with verification code
                 send_mail(
                     'Password Reset Verification Code',
@@ -155,7 +157,7 @@ class PasswordResetRequestView(APIView):
                     [user.email],
                     fail_silently=False,
                 )
-                
+
                 return Response({"message": "Verification code sent to your email"}, status=status.HTTP_200_OK)
             except CustomUser.DoesNotExist:
                 return Response({"error": "User with this email does not exist"}, status=status.HTTP_404_NOT_FOUND)
@@ -163,14 +165,14 @@ class PasswordResetRequestView(APIView):
 
 class PasswordResetVerifyView(APIView):
     permission_classes = [AllowAny]
-    
+
     def post(self, request):
         serializer = PasswordResetVerifySerializer(data=request.data)
         if serializer.is_valid():
             email = serializer.validated_data['email']
             token = serializer.validated_data['token']
             new_password = serializer.validated_data['new_password']
-            
+
             try:
                 user = CustomUser.objects.get(email=email)
                 reset_token = PasswordResetToken.objects.filter(
@@ -179,7 +181,7 @@ class PasswordResetVerifyView(APIView):
                     is_used=False,
                     expires_at__gte=timezone.now()
                 ).first()
-                
+
                 if reset_token:
                     user.set_password(new_password)
                     user.save()
@@ -189,8 +191,7 @@ class PasswordResetVerifyView(APIView):
                 return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
             except CustomUser.DoesNotExist:
                 return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
-
-        return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 
@@ -212,7 +213,5 @@ class CustomLoginView(APIView):
                     'user_type': user.user_type,
                     'message': 'Login successful',
                 })
-
-         
+       
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
-
