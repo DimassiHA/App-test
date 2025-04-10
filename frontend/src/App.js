@@ -8,6 +8,8 @@ import ForgotPassword from './components/Admin/ForgotPassword';
 import Login from "./components/login";
 import ClientDashboard from "./components/Client/ClientDashboard";
 import ServiceOwnerDashboard from "./components/ServiceOwner/ServiceOwnerDashboard";
+import Profile from "./components/Admin/Profile";
+import EditProfile from "./components/Admin/EditProfile";
 
 
 
@@ -17,10 +19,12 @@ function App() {
       <Route path="/admin" element={<AdminLogin />} />
       <Route path="/admin/dashboard" element={<Dashboard />} />
       <Route path="*" element={<Navigate to="/admin" />} />
+      <Route path="/admin/profile" element={<Profile />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/login" element={<Login />} />
       <Route path="/client/dashboard" element={<ClientDashboard/>} />
       <Route path="/service-owner/dashboard" element={<ServiceOwnerDashboard/>} />
+      <Route path="/admin/profile/edit" element={<EditProfile />} />
 
 
       {/* Client Registration Route */}

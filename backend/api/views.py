@@ -201,3 +201,33 @@ class CustomLoginView(APIView):
                 })
 
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
+        
+class UserDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        try:
+            user = CustomUser.objects.get(pk=pk)
+            serializer = CustomUserSerializer(user)
+            return Response(serializer.data)
+        except CustomUser.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    def patch(self, request, pk):
+        try:
+            user = CustomUser.objects.get(pk=pk)
+            
+            # Ensure users can only edit their own profile
+            if user.id != request.user.id:
+                return Response(
+                    {"error": "You can only edit your own profile"},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            serializer = CustomUserSerializer(user, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except CustomUser.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
