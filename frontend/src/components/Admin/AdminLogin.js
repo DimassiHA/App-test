@@ -37,6 +37,10 @@ const AdminLogin = () => {
     } catch (err) {
       setError("Invalid credentials or not an admin.");
       console.error("Login error:", err.response?.data);
+
+
+      setError("Invalid credentials "); // Display error message
+
     }
   };
 

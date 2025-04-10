@@ -3,7 +3,10 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from django.contrib import admin
 
 
-from api.views import MyTokenObtainPairView, PasswordResetRequestView, PasswordResetVerifyView
+from api.views import MyTokenObtainPairView, PasswordResetRequestView, PasswordResetVerifyView,CustomTokenObtainPairView
+
+
+from api.views import AdminLoginView , CreateUserView , ClientRegistrationView , ServiceOwnerRegistrationView , UserListView ,CustomLoginView
 
 
 from api.views import AdminLoginView , CreateUserView , ClientRegistrationView , ServiceOwnerRegistrationView , UserListView ,CustomLoginView , UserDetailView
@@ -16,6 +19,7 @@ urlpatterns = [
     path('api/', include('api.urls')),
     path('admin/', admin.site.urls),
     path('api/token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/custom-token/', CustomTokenObtainPairView.as_view(), name='custom_token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
     #ADMIN URLS
@@ -34,5 +38,4 @@ urlpatterns = [
     path('api/password-reset/request/', PasswordResetRequestView.as_view(), name='password_reset_request'),
     path('api/password-reset/verify/', PasswordResetVerifyView.as_view(), name='password_reset_verify'),
     path('api/login/',CustomLoginView.as_view(),name='login'),
-
 ]

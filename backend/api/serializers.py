@@ -3,7 +3,7 @@ from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import CustomUser ,Client ,ServiceOwner, ServicePicture
-
+from django.contrib.auth.hashers import make_password
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
@@ -14,6 +14,17 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['is_app_admin'] = user.is_app_admin
 
         return token
+
+class CustomTokenObtainPairSerializer(MyTokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token['user_type'] = user.user_type
+        return token
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        data['user_type'] = self.user.user_type
+        return data
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
@@ -46,6 +57,41 @@ class CustomUserSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
     
+class CustomUserBaseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['first_name', 'last_name', 'username', 'email', 'phone_number', 'region', 'birth_date']
+
+class ClientProfileSerializer(serializers.ModelSerializer):
+    user = CustomUserBaseSerializer()
+    class Meta:
+        model = Client
+        fields = ['user', 'gender', 'profile_picture']
+
+
+class CustomUserBaseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['first_name', 'last_name', 'username', 'email', 'phone_number', 'region', 'birth_date']
+    def create(self, validated_data):
+        password = validated_data.pop('password')
+        user = CustomUser.objects.create(**validated_data)
+        user.password = make_password(password)
+        user.save()
+        return user
+
+class ServicePictureSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ServicePicture
+        fields = ['image', 'uploaded_at'] 
+class ServiceOwnerProfileSerializer(serializers.ModelSerializer):
+    user = CustomUserBaseSerializer()  # Nested serializer for user fields
+    service_pictures = ServicePictureSerializer(many=True, read_only=True)  # Serialize related service pictures
+
+    class Meta:
+        model = ServiceOwner
+        fields = ['user', 'business_name', 'profile_picture', 'description', 'service_pictures']
+
 
 class ClientRegisterSerializer(serializers.ModelSerializer):
     gender = serializers.ChoiceField(choices=(('male', 'Male'), ('female', 'Female')),write_only=True)
@@ -105,8 +151,13 @@ class ServiceOwnerRegisterSerializer(serializers.ModelSerializer):
             ServicePicture.objects.create(service_owner=service_owner, image=picture)
         
         return user
+<<<<<<< HEAD
 class LoginSerializer(serializers.Serializer):
 
+=======
+
+class LoginSerializer(serializers.Serializer):
+>>>>>>> 40b57697b360fb3144ed53da7046ccd07eb78fd6
     username = serializers.CharField(max_length=255)
     password = serializers.CharField(write_only=True)
 
@@ -123,6 +174,7 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError('User does not exist')
 
         return attrs
+<<<<<<< HEAD
 
 class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -135,3 +187,5 @@ class PasswordResetVerifySerializer(serializers.Serializer):
 class PasswordResetChangeSerializer(serializers.Serializer):
     token = serializers.CharField()
     new_password = serializers.CharField(write_only=True)
+=======
+>>>>>>> 40b57697b360fb3144ed53da7046ccd07eb78fd6
