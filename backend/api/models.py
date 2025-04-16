@@ -69,7 +69,15 @@ class AdminUser(models.Model):
     admin_id = models.AutoField(primary_key=True)
     def __str__(self):
         return f"Admin: {self.user.username}"
-
+class PasswordResetTokenManager(models.Manager):
+    def create_token(self, user):
+        # Clean up expired tokens first
+        self.filter(expires_at__lte=timezone.now()).delete()
+        token = self.create(
+            user=user,
+            expires_at=timezone.now() + timedelta(minutes=15)
+        )
+        return token
 
 class PasswordResetToken(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
@@ -77,6 +85,7 @@ class PasswordResetToken(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
     is_used = models.BooleanField(default=False)
+    objects = PasswordResetTokenManager()
 
     def save(self, *args, **kwargs):
         if not self.token:

@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "../../api";
 import { jwtDecode } from "jwt-decode";
 import "./Dashboard.css";
+import { Link } from "react-router-dom";
+import { FaUserCircle } from "react-icons/fa";
 
 const Dashboard = () => {
   // State for form data, error handling, superuser status, and user list
@@ -62,6 +64,7 @@ const Dashboard = () => {
     localStorage.removeItem("adminRefreshToken");
     navigate("/admin"); // Redirect to login page
   };
+  
 
   // Step 4: Handle form input changes
   const handleInputChange = (e) => {
@@ -116,13 +119,19 @@ const Dashboard = () => {
 
   // Step 7: Render the dashboard
   return (
-    <div className="dashboard-container">
-      <h1>Admin Dashboard</h1>
-
-      {/* Logout button */}
-      <button onClick={handleLogout} className="logout-button">
-        Logout
-      </button>
+    <div>
+    <div className="dashboard-header">
+  <h1>Admin Dashboard</h1>
+  <div className="dashboard-actions">
+    <Link to="/admin/profile" className="profile-link" title="View Profile">
+      <FaUserCircle size={24} />
+      <span className="profile-link-text">Profile</span>
+    </Link>
+    <button onClick={handleLogout} className="logout-button">
+      Logout
+    </button>
+  </div>
+</div>
 
       {/* Display error messages */}
       {error && <p className="error-message">{error}</p>}

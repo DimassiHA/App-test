@@ -10,7 +10,6 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
 
-        # Add custom fields to both Access & Refresh tokens
         token['is_superuser'] = user.is_superuser
         token['is_app_admin'] = user.is_app_admin
 
@@ -48,6 +47,15 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
         user = CustomUser.objects.create_user(**validated_data)
         return user
+    def update(self, instance, validated_data):
+        # Handle partial updates
+        instance.username = validated_data.get('username', instance.username)
+        instance.email = validated_data.get('email', instance.email)
+        instance.phone_number = validated_data.get('phone_number', instance.phone_number)
+        instance.region = validated_data.get('region', instance.region)
+        instance.birth_date = validated_data.get('birth_date', instance.birth_date)
+        instance.save()
+        return instance
     
 class CustomUserBaseSerializer(serializers.ModelSerializer):
     class Meta:
@@ -143,7 +151,6 @@ class ServiceOwnerRegisterSerializer(serializers.ModelSerializer):
             ServicePicture.objects.create(service_owner=service_owner, image=picture)
         
         return user
-
 class LoginSerializer(serializers.Serializer):
 
     username = serializers.CharField(max_length=255)
@@ -162,8 +169,6 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError('User does not exist')
 
         return attrs
-
-
 class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
