@@ -20,11 +20,11 @@ function App() {
       <Route path="/admin" element={<AdminLogin />} />
       <Route path="/admin/dashboard" element={<Dashboard />} />
       <Route path="*" element={<Navigate to="/admin" />} />
-<<<<<<< HEAD
-      <Route path="/admin/profile" element={<Profile />} />
-=======
 
->>>>>>> 1df40f18672e0899f9db2f31f5fc38c3d0e02689
+      <Route path="/admin/profile" element={<Profile />} />
+
+
+
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/login" element={<Login />} />
       <Route path="/client/dashboard" element={<ClientDashboard/>} />
