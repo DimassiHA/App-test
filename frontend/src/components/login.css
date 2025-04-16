@@ -1,4 +1,3 @@
-/* Container styling for centering the form */
 @import url('https://fonts.googleapis.com/css2?family=Marcellus&display=swap');
 
 .registration-container {
@@ -25,15 +24,18 @@ h2 {
     margin-bottom: 20px;
     font-size: 24px;
     color: #333;
+    font-family: 'Marcellus', serif;
 }
 
-.input-group {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
+label {
+    display: block;
+    margin: 12px 0 4px;
+    font-size: 16px;
+    color: #333;
+    font-family: 'Marcellus', serif;
 }
 
-input, select, button {
+input {
     width: 100%;
     padding: 12px;
     margin: 8px 0;
@@ -41,46 +43,28 @@ input, select, button {
     border-radius: 5px;
     box-sizing: border-box;
     font-size: 16px;
-}
-
-input[type="file"] {
-    padding: 5px;
+    font-family: 'Marcellus', serif;
 }
 
 button {
-    background-color: 2813E1;
+    background-color: #2813E1;
     color: white;
     cursor: pointer;
     font-size: 16px;
     border: none;
+    border-radius: 5px;
+    padding: 12px;
+    margin-top: 20px;
+    font-family: 'Marcellus', serif;
 }
 
 button:hover {
     background-color: #0056b3;
 }
 
-select {
-    cursor: pointer;
-}
-
-.info-message {
+.error-message {
+    color: red;
     text-align: center;
-    color: green;
-    font-size: 16px;
-    margin-top: 10px;
-}
-
-form {
-    display: flex;
-    flex-direction: column;
-}
-
-@media (max-width: 500px) {
-    .input-group {
-        flex-direction: column;
-    }
-}
-
-body {
+    margin-bottom: 10px;
     font-family: 'Marcellus', serif;
-  }
+}

@@ -64,7 +64,7 @@ const ClientRegistrationForm = () => {
     return (
         <div className="registration-container">
             <div className="registration-box">
-                <h2>Create Account</h2>
+                <h2>Client registration</h2>
                 {message && <p className="info-message">{message}</p>}
                 <form>
                     {currentStep === 1 && (

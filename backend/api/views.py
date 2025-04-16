@@ -215,3 +215,29 @@ class CustomLoginView(APIView):
                 })
        
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+
+        if user.user_type == 'client':
+            try:
+                profile = user.client_profile
+                serializer = ClientProfileSerializer(profile)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            except Client.DoesNotExist:
+                return Response({'error': 'Client profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        elif user.user_type == 'service_owner':
+            try:
+                profile = user.service_owner_profile
+                serializer = ServiceOwnerProfileSerializer(profile)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            except ServiceOwner.DoesNotExist:
+                return Response({'error': 'Service owner profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        else:
+            return Response({'error': 'Invalid user type.'}, status=status.HTTP_400_BAD_REQUEST)

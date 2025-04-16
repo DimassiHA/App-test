@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from "../api";
 import { useNavigate } from 'react-router-dom';
+import './login.css'; 
 
 const Login = () => {
   const navigate = useNavigate();  
@@ -9,26 +10,21 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError(""); // Clear previous error
+    setError("");
 
     try {
       const response = await axios.post("/custom-token/", { username, password });
-      console.log("Login response:", response.data);
 
-      // Save tokens
       localStorage.setItem("accessToken", response.data.access);
       localStorage.setItem("refreshToken", response.data.refresh);
 
-      // Store user_type (from response)
       const userType = response.data.user_type;
-
-      // Optional: Store user_type if needed across the app
+      const userName = response.data.username;
       localStorage.setItem("userType", userType);
+      localStorage.setItem("username", userName);
 
-      // Navigate based on user type
       if (userType === 'client') {
         navigate("/client/dashboard");
       } else if (userType === 'service_owner') {
@@ -46,24 +42,19 @@ const Login = () => {
   };
 
   return (
-    <div>
-      <h2>Login</h2>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <form onSubmit={handleLogin}>
-        <div>
+    <div className="registration-container">
+      <div className="registration-box">
+        <h2>Login</h2>
+        {error && <p className="error-message">{error}</p>}
+        <form onSubmit={handleLogin}>
           <label>Username (Email/Phone/Username):</label>
           <input
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-
-
             placeholder="Enter your email, phone number, or username"
-
             required
           />
-        </div>
-        <div>
           <label>Password:</label>
           <input
             type="password"
@@ -72,9 +63,9 @@ const Login = () => {
             placeholder="Enter your password"
             required
           />
-        </div>
-        <button type="submit">Login</button>
-      </form>
+          <button type="submit">Login</button>
+        </form>
+      </div>
     </div>
   );
 };
