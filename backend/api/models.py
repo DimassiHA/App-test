@@ -47,14 +47,19 @@ class Client(models.Model):
     profile_picture = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)
     def __str__(self):
         return f"Client: {self.user.username}"
+
+
 class ServiceOwner(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name="service_owner_profile")
     business_name = models.CharField(max_length=255)
     profile_picture = models.ImageField(upload_to='service_owner_profiles/', null=True, blank=True)
-    description= models.TextField()
+    description = models.TextField()
+    is_approved = models.BooleanField(default=False)  # New field
+    admin_notes = models.TextField(null=True, blank=True)  # For rejection reasons
 
     def __str__(self):
-        return f"Service Owner: {self.user.username} - {self.business_name}"
+        return f"Service Owner: {self.user.username} - {self.business_name} ({'Approved' if self.is_approved else 'Pending'})"
+
 
 class ServicePicture(models.Model):
     service_owner = models.ForeignKey(ServiceOwner, on_delete=models.CASCADE, related_name="service_pictures")

@@ -17,7 +17,7 @@ from django.conf import settings
 
 from .serializers import CustomUserSerializer ,ClientRegisterSerializer,ServiceOwnerRegisterSerializer,ClientProfileSerializer,ServiceOwnerProfileSerializer
 
-from rest_framework import status , generics 
+from rest_framework import status , generics
 
 from .models import CustomUser , Client , ServiceOwner
 from .serializers import  MyTokenObtainPairSerializer
@@ -31,24 +31,24 @@ from django.contrib.auth import login
 
 class ClientRegistrationView(CreateAPIView):
     serializer_class = ClientRegisterSerializer
-    permission_classes = [AllowAny] 
+    permission_classes = [AllowAny]
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        
+
         client = user.client_profile
         response_serializer = ClientProfileSerializer(client)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
 class ServiceOwnerRegistrationView(CreateAPIView):
     serializer_class = ServiceOwnerRegisterSerializer
-    permission_classes = [AllowAny] 
+    permission_classes = [AllowAny]
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        
+
         service_owner = user.service_owner_profile
         response_serializer = ServiceOwnerProfileSerializer(service_owner)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
@@ -143,11 +143,12 @@ class PasswordResetRequestView(APIView):
             email = serializer.validated_data['email']
             try:
                 user = CustomUser.objects.get(email=email)
-                # Create or update reset token
-                token, created = PasswordResetToken.objects.update_or_create(
-                    user=user,
-                    defaults={'is_used': False}
-                )
+
+                # Delete any existing tokens for this user first
+                PasswordResetToken.objects.filter(user=user).delete()
+
+                # Create a new token (automatically generates a new code via save())
+                token = PasswordResetToken.objects.create(user=user)
 
                 # Send email with verification code
                 send_mail(
@@ -196,16 +197,14 @@ class PasswordResetVerifyView(APIView):
 
 
 class CustomLoginView(APIView):
-    permission_classes = [AllowAny] 
+    permission_classes = [AllowAny]
     def post(self, request, *args, **kwargs):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
             username = serializer.validated_data['username']
             password = serializer.validated_data['password']
 
-
             user = authenticate(request, username=username, password=password)
-
 
             if user is not None:
                 login(request, user)
@@ -231,14 +230,14 @@ class UserDetailView(APIView):
     def patch(self, request, pk):
         try:
             user = CustomUser.objects.get(pk=pk)
-            
+
             # Ensure users can only edit their own profile
             if user.id != request.user.id:
                 return Response(
                     {"error": "You can only edit your own profile"},
                     status=status.HTTP_403_FORBIDDEN
                 )
-            
+
             serializer = CustomUserSerializer(user, data=request.data, partial=True)
             if serializer.is_valid():
                 serializer.save()
@@ -247,5 +246,92 @@ class UserDetailView(APIView):
         except CustomUser.DoesNotExist:
             return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        
 
+
+
+class PendingServiceOwnersView(generics.ListAPIView):
+    permission_classes = [IsAppAdmin]  # Your existing permission
+    serializer_class = ServiceOwnerProfileSerializer
+    
+    def get_queryset(self):
+        return ServiceOwner.objects.filter(is_approved=False)
+
+class ApproveServiceOwnerView(APIView):
+    permission_classes = [IsAppAdmin]
+    
+    def post(self, request, pk):
+        try:
+            service_owner = ServiceOwner.objects.get(pk=pk)
+            service_owner.is_approved = True
+            service_owner.save()
+            
+            # Send approval email
+            self.send_approval_email(service_owner)
+            
+            return Response({"status": "approved"}, status=status.HTTP_200_OK)
+        except ServiceOwner.DoesNotExist:
+            return Response({"error": "Service owner not found"}, status=status.HTTP_404_NOT_FOUND)
+    
+    def send_approval_email(self, service_owner):
+        subject = f'Your {service_owner.business_name} Has Been Approved!'
+        message = f"""
+        Congratulations {service_owner.user.username}!
+        
+        Your business, {service_owner.business_name}, has been approved.
+        You can now log in and start using all platform features.
+        
+        Get started by completing your profile and adding your services.
+        
+        Thank you,
+        The Platform Team
+        """
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [service_owner.user.email],
+            fail_silently=False,
+        )
+
+class RejectServiceOwnerView(APIView):
+    permission_classes = [IsAppAdmin]
+    
+    def post(self, request, pk):
+        try:
+            service_owner = ServiceOwner.objects.get(pk=pk)
+            reason = request.data.get('reason', '')
+            service_owner.admin_notes = reason
+            service_owner.save()
+            
+            # Send rejection email
+            self.send_rejection_email(service_owner, reason)
+            
+            # Optionally delete or keep the record
+            # service_owner.delete()
+            
+            return Response({"status": "rejected"}, status=status.HTTP_200_OK)
+        except ServiceOwner.DoesNotExist:
+            return Response({"error": "Service owner not found"}, status=status.HTTP_404_NOT_FOUND)
+    
+    def send_rejection_email(self, service_owner, reason):
+        subject = f'Regarding Your {service_owner.business_name} Application'
+        message = f"""
+        Hello {service_owner.user.username},
+        
+        After careful review, we're unable to approve your business, {service_owner.business_name}, at this time.
+        
+        Reason: {reason}
+        
+        You may correct these issues and reapply if you wish.
+        Contact support if you have any questions.
+        
+        Best regards,
+        The Platform Team
+        """
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [service_owner.user.email],
+            fail_silently=False,
+        )

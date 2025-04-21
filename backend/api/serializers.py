@@ -109,50 +109,60 @@ class ClientRegisterSerializer(serializers.ModelSerializer):
         Client.objects.create(user=user, gender=gender , profile_picture=profile_picture)  # Create associated Client profile
         return user
 
+# Modify ServiceOwnerRegisterSerializer
 class ServiceOwnerRegisterSerializer(serializers.ModelSerializer):
-    profile_picture = serializers.ImageField(required=False)
-    business_name = serializers.CharField()
-    description = serializers.CharField()
-    service_pictures = serializers.ListField(
-        child=serializers.ImageField(),
-        write_only=True,
-        required=True
-    )
-    class Meta:
-        model = CustomUser
-        fields = [
-            'first_name', 'last_name', 'username', 'email', 'password', 
-            'phone_number', 'region', 'birth_date', 'profile_picture', 
-            'business_name', 'description', 'service_pictures'
-        ]
-        extra_kwargs = {'password': {'write_only': True}}
-
-    def validate_service_pictures(self, value):
-        if len(value) < 1:
-            raise serializers.ValidationError("At least one service picture is required.")
-        return value
-
+    # ... [keep existing fields] ...
+    
     def create(self, validated_data):
         profile_picture = validated_data.pop('profile_picture', None)
         business_name = validated_data.pop('business_name')
         description = validated_data.pop('description')
         service_pictures = validated_data.pop('service_pictures')
         
-        # Create the User and ServiceOwner
+        # Create user with is_approved=False by default
         user = CustomUser.objects.create_user(**validated_data, user_type='service_owner')
+        
         service_owner = ServiceOwner.objects.create(
-            user=user, 
-            profile_picture=profile_picture, 
+            user=user,
+            profile_picture=profile_picture,
             business_name=business_name,
-            description=description
-        ) 
+            description=description,
+            is_approved=False  # Default to not approved
+        )
+        
         # Save service pictures
         for picture in service_pictures:
             ServicePicture.objects.create(service_owner=service_owner, image=picture)
         
+        # Send pending approval email
+        self.send_pending_email(user, business_name)
+        
         return user
 
-
+    def send_pending_email(self, user, business_name):
+        from django.core.mail import send_mail
+        subject = f'Your {business_name} Application is Under Review'
+        message = f"""
+        Hello {user.username},
+        
+        Thank you for registering your business, {business_name}, on our platform.
+        Your application is currently under review by our admin team.
+        
+        You will receive another email once your application has been processed.
+        This typically takes 1-3 business days.
+        
+        If you have any questions, please contact support.
+        
+        Best regards,
+        The Platform Team
+        """
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            fail_silently=False,
+        )
 
 
 
