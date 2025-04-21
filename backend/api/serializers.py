@@ -95,7 +95,7 @@ class ServiceOwnerProfileSerializer(serializers.ModelSerializer):
 
 class ClientRegisterSerializer(serializers.ModelSerializer):
     gender = serializers.ChoiceField(choices=(('male', 'Male'), ('female', 'Female')),write_only=True)
-    profile_picture = serializers.ImageField(required=False)
+    profile_picture = serializers.ImageField(required=False,use_url=True)
 
     class Meta:
         model = CustomUser
@@ -111,8 +111,33 @@ class ClientRegisterSerializer(serializers.ModelSerializer):
 
 # Modify ServiceOwnerRegisterSerializer
 class ServiceOwnerRegisterSerializer(serializers.ModelSerializer):
+<<<<<<< HEAD
     # ... [keep existing fields] ...
     
+=======
+    profile_picture = serializers.ImageField(required=False,use_url=True)
+    business_name = serializers.CharField()
+    description = serializers.CharField()
+    service_pictures = serializers.ListField(
+        child=serializers.ImageField(use_url=True),
+        write_only=True,
+        required=True
+    )
+    class Meta:
+        model = CustomUser
+        fields = [
+            'first_name', 'last_name', 'username', 'email', 'password', 
+            'phone_number', 'region', 'birth_date', 'profile_picture', 
+            'business_name', 'description', 'service_pictures'
+        ]
+        extra_kwargs = {'password': {'write_only': True}}
+
+    def validate_service_pictures(self, value):
+        if len(value) < 1:
+            raise serializers.ValidationError("At least one service picture is required.")
+        return value
+
+>>>>>>> 610df490a5c70d3a699d790cd5d468332d39eb3c
     def create(self, validated_data):
         profile_picture = validated_data.pop('profile_picture', None)
         business_name = validated_data.pop('business_name')
@@ -138,6 +163,7 @@ class ServiceOwnerRegisterSerializer(serializers.ModelSerializer):
         self.send_pending_email(user, business_name)
         
         return user
+<<<<<<< HEAD
 
     def send_pending_email(self, user, business_name):
         from django.core.mail import send_mail
@@ -166,6 +192,8 @@ class ServiceOwnerRegisterSerializer(serializers.ModelSerializer):
 
 
 
+=======
+>>>>>>> 610df490a5c70d3a699d790cd5d468332d39eb3c
 class LoginSerializer(serializers.Serializer):
 
     username = serializers.CharField(max_length=255)
@@ -184,7 +212,6 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError('User does not exist')
 
         return attrs
-
 class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
@@ -196,4 +223,3 @@ class PasswordResetVerifySerializer(serializers.Serializer):
 class PasswordResetChangeSerializer(serializers.Serializer):
     token = serializers.CharField()
     new_password = serializers.CharField(write_only=True)
-

@@ -9,6 +9,9 @@ import ForgotPassword from './components/Admin/ForgotPassword';
 import Login from "./components/login";
 import ClientDashboard from "./components/Client/ClientDashboard";
 import ServiceOwnerDashboard from "./components/ServiceOwner/ServiceOwnerDashboard";
+
+import UserProfile from "./components/UserProfile";
+
 import Profile from "./components/Admin/Profile";
 import EditProfile from "./components/Admin/EditProfile";
 
@@ -38,6 +41,7 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/client/dashboard" element={<ClientDashboard/>} />
       <Route path="/service-owner/dashboard" element={<ServiceOwnerDashboard/>} />
+      <Route path="/profile" element={<UserProfile />} />
 
     </Routes>
   );

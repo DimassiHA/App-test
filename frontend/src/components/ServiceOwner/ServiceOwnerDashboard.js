@@ -1,12 +1,29 @@
 
-import React from 'react';
 
-const ServiceOwnerDashboard = () => {
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+
+const ServiceOwnerDashboard= () => {
+  const navigate = useNavigate();
+
   return (
     <div>
-      <h2>Welcome to the Service Owner Dashboard</h2>
-      <p>This is where service owners can manage their business, post services, etc.</p>
-      {/* Add other service owner-specific components here */}
+      <h1>Welcome to your Dashboard</h1>
+      <button
+  onClick={() => navigate('/profile')}
+  style={{
+    padding: '6px 12px',
+    fontSize: '14px',
+    backgroundColor: '#2813E1',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontFamily: 'Marcellus, serif'
+  }}
+>
+  View Profile
+</button>
     </div>
   );
 };

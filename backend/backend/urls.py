@@ -6,10 +6,9 @@ from django.contrib import admin
 from api.views import MyTokenObtainPairView, PasswordResetRequestView, PasswordResetVerifyView,CustomTokenObtainPairView
 
 
-from api.views import AdminLoginView , CreateUserView , ClientRegistrationView , ServiceOwnerRegistrationView , UserListView ,CustomLoginView
+from api.views import AdminLoginView , CreateUserView , ClientRegistrationView , ServiceOwnerRegistrationView , UserListView ,CustomLoginView,UserProfileView, UserDetailView
 
 
-from api.views import AdminLoginView , CreateUserView , ClientRegistrationView , ServiceOwnerRegistrationView , UserListView ,CustomLoginView , UserDetailView
 
 
 
@@ -38,4 +37,5 @@ urlpatterns = [
     path('api/password-reset/request/', PasswordResetRequestView.as_view(), name='password_reset_request'),
     path('api/password-reset/verify/', PasswordResetVerifyView.as_view(), name='password_reset_verify'),
     path('api/login/',CustomLoginView.as_view(),name='login'),
+    path('api/profile/', UserProfileView.as_view(), name='user-profile'),
 ]
