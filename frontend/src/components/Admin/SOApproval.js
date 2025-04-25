@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from "../../api";
 import { Table, Button, Tag, message, Modal, Input, Spin } from 'antd';
+import { useNavigate } from "react-router-dom";
 
 const ServiceOwnerApproval = () => {
   const [serviceOwners, setServiceOwners] = useState([]);
@@ -9,6 +10,7 @@ const ServiceOwnerApproval = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [currentOwner, setCurrentOwner] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const navigate = useNavigate();
 
   const fetchPendingOwners = async () => {
     setLoading(true);
@@ -20,7 +22,6 @@ const ServiceOwnerApproval = () => {
         }
       });
       
-      // Transform the API response to match our needs
       const formattedData = response.data.map(owner => {
         return {
           key: owner.id,
@@ -29,8 +30,8 @@ const ServiceOwnerApproval = () => {
           username: owner.user?.username || 'N/A',
           email: owner.user?.email || 'N/A',
           business_name: owner.business_name || 'N/A',
-          status: owner.status || 'pending', // Default to pending if undefined
-          rawData: owner // Keep original data
+          status: owner.status || 'pending',
+          rawData: owner
         };
       });
       
@@ -108,6 +109,10 @@ const ServiceOwnerApproval = () => {
     setRejectReason('');
   };
 
+  const handleBack = () => {
+    navigate("/admin/dashboard");
+  };
+
   const columns = [
     {
       title: 'Username',
@@ -155,7 +160,6 @@ const ServiceOwnerApproval = () => {
               onClick={() => handleApprove(record.id)}
               disabled={status !== 'pending' || actionLoading}
               loading={actionLoading && currentOwner?.id === record.id}
-
             >
               Approve
             </Button>
@@ -174,7 +178,15 @@ const ServiceOwnerApproval = () => {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Service Owner Approvals</h1>
+      <div className="dashboard-header">
+        <h1 className="text-2xl font-bold">Service Owner Approvals</h1>
+        <div className="dashboard-actions">
+          <Button onClick={handleBack} className="back-button">
+            Back to Dashboard
+          </Button>
+        </div>
+      </div>
+      
       <Spin spinning={loading}>
         <Table 
           columns={columns} 

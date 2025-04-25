@@ -56,6 +56,10 @@ const Dashboard = () => {
     navigate("/admin/add-user");
   };
 
+  const navigateToSOApproval = () => {
+    navigate("/admin/SOApproval")
+  }
+
   return (
     <div>
       <div className="dashboard-header">
@@ -71,6 +75,12 @@ const Dashboard = () => {
               <span>Create User</span>
             </button>
           )}
+          
+            <button onClick={navigateToSOApproval} className="create-user-button">
+              <FaUserPlus size={18} />
+              <span>ServiceOwnerApproval</span>
+            </button>
+          
           <button onClick={handleLogout} className="logout-button">
             Logout
           </button>
