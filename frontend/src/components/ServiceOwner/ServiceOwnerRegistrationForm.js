@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from "../../api";
 import { useNavigate } from 'react-router-dom';
-import "../Register.css"; // You can reuse the same styling
+import "../Register.css";
 
 const ServiceOwnerRegistrationForm = () => {
     const [formData, setFormData] = useState({
@@ -16,13 +16,29 @@ const ServiceOwnerRegistrationForm = () => {
         business_name: '',
         description: '',
         service_pictures: [],
+        event_types: [],
         password: '',
         password_confirmation: '',
     });
 
     const [currentStep, setCurrentStep] = useState(1);
     const [message, setMessage] = useState('');
+    const [eventTypes, setEventTypes] = useState([]);
     const navigate = useNavigate();
+
+    // Fetch event types on component mount
+    useEffect(() => {
+        const fetchEventTypes = async () => {
+            try {
+                const response = await axios.get('/admin/event-types/');
+                setEventTypes(response.data);
+            } catch (error) {
+                console.error('Error fetching event types:', error);
+                setMessage('Failed to load event types. Please refresh the page.');
+            }
+        };
+        fetchEventTypes();
+    }, []);
 
     const nextStep = () => setCurrentStep(currentStep + 1);
     const prevStep = () => setCurrentStep(currentStep - 1);
@@ -39,11 +55,27 @@ const ServiceOwnerRegistrationForm = () => {
         }
     };
 
+    const handleEventTypeChange = (e) => {
+        const options = e.target.options;
+        const selectedValues = [];
+        for (let i = 0; i < options.length; i++) {
+            if (options[i].selected) {
+                selectedValues.push(options[i].value);
+            }
+        }
+        setFormData({ ...formData, event_types: selectedValues });
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         if (formData.password !== formData.password_confirmation) {
             setMessage('Passwords do not match!');
+            return;
+        }
+
+        if (formData.event_types.length === 0) {
+            setMessage('Please select at least one event type!');
             return;
         }
 
@@ -53,6 +85,10 @@ const ServiceOwnerRegistrationForm = () => {
                 for (let i = 0; i < formData.service_pictures.length; i++) {
                     data.append('service_pictures', formData.service_pictures[i]);
                 }
+            } else if (key === "event_types") {
+                formData.event_types.forEach(type => {
+                    data.append('event_types', type);
+                });
             } else {
                 data.append(key, formData[key]);
             }
@@ -63,11 +99,10 @@ const ServiceOwnerRegistrationForm = () => {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
             setMessage('Registration successful!');
-
             console.log("Response from backend:", response.data);
             navigate('/login');
         } catch (error) {
-            setMessage('Registration failed. Please try again.');
+            setMessage(error.response?.data?.message || 'Registration failed. Please try again.');
             console.error(error.response?.data);
         }
     };
@@ -76,7 +111,7 @@ const ServiceOwnerRegistrationForm = () => {
         <div className="registration-container">
             <div className="registration-box">
                 <h2>Service Owner Registration</h2>
-                {message && <p className="info-message">{message}</p>}
+                {message && <p className={`info-message ${message.includes('successful') ? 'success' : 'error'}`}>{message}</p>}
                 <form>
                     {currentStep === 1 && (
                         <div className="step">
@@ -151,6 +186,7 @@ const ServiceOwnerRegistrationForm = () => {
                                 onChange={handleChange}
                                 required
                             />
+                            <label>Profile Picture</label>
                             <input
                                 type="file"
                                 name="profile_picture"
@@ -180,13 +216,30 @@ const ServiceOwnerRegistrationForm = () => {
                                 onChange={handleChange}
                                 required
                             />
+                            <label>Service Pictures (Upload at least one)</label>
                             <input
                                 type="file"
                                 name="service_pictures"
                                 accept="image/*"
                                 multiple
                                 onChange={handleChange}
+                                required
                             />
+                            <label>Event Types (Select at least one)</label>
+                            <select 
+                                multiple 
+                                name="event_types"
+                                onChange={handleEventTypeChange}
+                                value={formData.event_types}
+                                required
+                                size="5"
+                                style={{ width: '100%', padding: '8px', marginBottom: '15px' }}
+                            >
+                                {eventTypes.map(type => (
+                                    <option key={type.id} value={type.id}>{type.name}</option>
+                                ))}
+                            </select>
+                            <small>Hold Ctrl/Cmd to select multiple</small>
                             <button type="button" onClick={prevStep}>Previous</button>
                             <button type="button" onClick={nextStep}>Next</button>
                         </div>

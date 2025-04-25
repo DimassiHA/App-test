@@ -52,6 +52,16 @@ class Client(models.Model):
     profile_picture = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)
     def __str__(self):
         return f"Client: {self.user.username}"
+
+class EventType(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
 class ServiceOwner(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
@@ -64,6 +74,7 @@ class ServiceOwner(models.Model):
     description= models.TextField()
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
     rejection_reason = models.TextField(blank=True, null=True)
+    event_types = models.ManyToManyField(EventType)
 
     def __str__(self):
         return f"Service Owner: {self.user.username} - {self.business_name}"
@@ -101,17 +112,12 @@ class PasswordResetToken(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.token:
-            self.token = str(random.randint(100000, 999999))  # 6-digit code
+            self.token = str(random.randint(100000, 999999))
         if not self.expires_at:
-            self.expires_at = timezone.now() + timedelta(minutes=15)  # 15 min expiry
+            self.expires_at = timezone.now() + timedelta(minutes=15)
         super().save(*args, **kwargs)
 
 
-class EventType(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    description = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
-        return self.name
+
+

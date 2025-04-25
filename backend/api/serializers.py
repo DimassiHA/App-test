@@ -106,6 +106,11 @@ class ClientRegisterSerializer(serializers.ModelSerializer):
         Client.objects.create(user=user, gender=gender , profile_picture=profile_picture)  # Create associated Client profile
         return user
 
+class EventTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EventType
+        fields = ['id', 'name', 'description', 'created_at', 'updated_at']
+
 class ServiceOwnerRegisterSerializer(serializers.ModelSerializer):
     profile_picture = serializers.ImageField(required=False)
     business_name = serializers.CharField()
@@ -115,25 +120,33 @@ class ServiceOwnerRegisterSerializer(serializers.ModelSerializer):
         write_only=True,
         required=True
     )
+    event_types = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=EventType.objects.all(),
+        required=True
+    )
+
     class Meta:
         model = CustomUser
         fields = [
             'first_name', 'last_name', 'username', 'email', 'password',
             'phone_number', 'region', 'birth_date', 'profile_picture',
-            'business_name', 'description', 'service_pictures'
+            'business_name', 'description', 'service_pictures', 'event_types'
         ]
         extra_kwargs = {'password': {'write_only': True}}
 
-    def validate_service_pictures(self, value):
+    def validate_event_types(self, value):
         if len(value) < 1:
-            raise serializers.ValidationError("At least one service picture is required.")
+            raise serializers.ValidationError("At least one event type is required.")
         return value
 
     def create(self, validated_data):
+        print("Received data:", validated_data.keys())
         profile_picture = validated_data.pop('profile_picture', None)
         business_name = validated_data.pop('business_name')
         description = validated_data.pop('description')
         service_pictures = validated_data.pop('service_pictures')
+        event_types = validated_data.pop('event_types')
         user = CustomUser.objects.create_user(**validated_data, user_type='service_owner')
         service_owner = ServiceOwner.objects.create(
             user=user,
@@ -142,10 +155,11 @@ class ServiceOwnerRegisterSerializer(serializers.ModelSerializer):
             description=description,
             status='pending'
         )
+        service_owner.event_types.set(event_types)
+        
         for picture in service_pictures:
             ServicePicture.objects.create(service_owner=service_owner, image=picture)
         return user
-
 
 
 
@@ -182,7 +196,4 @@ class PasswordResetChangeSerializer(serializers.Serializer):
     new_password = serializers.CharField(write_only=True)
 
 
-class EventTypeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = EventType
-        fields = ['id', 'name', 'description', 'created_at', 'updated_at']
+
