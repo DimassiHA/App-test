@@ -21,16 +21,20 @@ const ServiceOwnerApproval = () => {
           Authorization: `Bearer ${localStorage.getItem('adminAccessToken')}`
         }
       });
-      
+      console.log("Full raw API response:", response.data);
+      console.log("Fetched owners:", response.data);
       const formattedData = response.data.map(owner => {
+        const serviceOwnerId = owner.id;
+        const userId = owner.user?.id;
+      
         return {
-          key: owner.id,
-          id: owner.id,
-          user_id: owner.user?.id,
+          key: serviceOwnerId,
+          id: serviceOwnerId,  // This is now correctly populated
+          user_id: userId,
           username: owner.user?.username || 'N/A',
           email: owner.user?.email || 'N/A',
           business_name: owner.business_name || 'N/A',
-          status: owner.status || 'pending',
+          status: 'pending',
           rawData: owner
         };
       });
@@ -46,19 +50,21 @@ const ServiceOwnerApproval = () => {
 
   useEffect(() => {
     fetchPendingOwners();
-  }, []);
+
+  },[]);
 
   const handleApprove = async (id) => {
+    if (!id) {
+      message.error("Missing service owner ID");
+      return;
+    }
+  
     setActionLoading(true);
     try {
       await axios.patch(
         `/admin/service-owners/${id}/approve/`,
         {},
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('adminAccessToken')}`
-          }
-        }
+        { headers: { Authorization: `Bearer ${localStorage.getItem('adminAccessToken')}` } }
       );
       message.success('Service owner approved successfully');
       fetchPendingOwners();
@@ -152,12 +158,16 @@ const ServiceOwnerApproval = () => {
       title: 'Action',
       key: 'action',
       render: (_, record) => {
+        console.log("Record data:", record); // Log the full record object
         const status = record.status || record.rawData?.status || 'pending';
         return (
           <div className="flex gap-2">
             <Button 
               type="primary" 
-              onClick={() => handleApprove(record.id)}
+              onClick={() => {
+                console.log("Approve clicked for ID:", record.id); // Log ID
+                handleApprove(record.id);
+              }}
               disabled={status !== 'pending' || actionLoading}
               loading={actionLoading && currentOwner?.id === record.id}
             >
@@ -165,7 +175,10 @@ const ServiceOwnerApproval = () => {
             </Button>
             <Button 
               danger
-              onClick={() => showRejectModal(record)}
+              onClick={() => {
+                console.log("Reject clicked for ID:", record.id); // Log ID
+                showRejectModal(record);
+              }}
               disabled={status !== 'pending' || actionLoading}
             >
               Reject
@@ -173,7 +186,7 @@ const ServiceOwnerApproval = () => {
           </div>
         );
       },
-    },
+    }
   ];
 
   return (

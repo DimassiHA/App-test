@@ -87,7 +87,7 @@ class ServiceOwnerProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ServiceOwner
-        fields = ['user', 'business_name', 'profile_picture', 'description', 'service_pictures']
+        fields = ['id', 'user', 'business_name', 'profile_picture', 'description', 'service_pictures']
 
 
 class ClientRegisterSerializer(serializers.ModelSerializer):
