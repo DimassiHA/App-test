@@ -92,3 +92,38 @@
   .profile-link:hover {
     text-decoration: underline;
   }
+
+/* For the create user button */
+.create-user-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-right: 10px;
+}
+
+.create-user-button:hover {
+  background-color: #45a049;
+}
+
+/* For the back button */
+.back-button {
+  padding: 8px 16px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-right: 10px;
+}
+
+.back-button:hover {
+  background-color: #5a6268;
+}

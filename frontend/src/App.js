@@ -16,6 +16,7 @@ import UserProfile from "./components/UserProfile";
 import Profile from "./components/Admin/Profile";
 import EditProfile from "./components/Admin/EditProfile";
 import ServiceOwnerApproval from "./components/Admin/SOApproval";
+import AddUser from "./components/Admin/AddUser";
 
 
 
@@ -26,6 +27,7 @@ function App() {
       <Route path="/admin/dashboard" element={<Dashboard />} />
       <Route path="*" element={<Navigate to="/admin" />} />
       <Route path="/admin/SOApproval" element={<ServiceOwnerApproval />} />
+      <Route path="/admin/add-user" element={<AddUser />} />
       <Route path="/admin/profile" element={<Profile />} />
       
 
