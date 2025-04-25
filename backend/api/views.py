@@ -61,23 +61,24 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
 class IsAppAdmin(BasePermission):
     def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and request.user.is_app_admin)
+        return bool(request.user and request.user.user_type == 'admin')
 class IsSuperuser(BasePermission):
     def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and request.user.is_superuser)
+        return bool(request.user and request.user.user_type == 'superuser')
 
 class CreateUserView(APIView):
     permission_classes = [IsSuperuser]
 
     def post(self, request):
-
-        if request.data.get("is_app_admin") and not request.user.is_superuser:
+        # Prevent non-superusers from creating admin/superuser accounts
+        requested_type = request.data.get('user_type')
+        if requested_type in ['admin', 'superuser'] and not request.user.is_superuser:
             return Response(
-                {"error": "Only superusers can create admin accounts."},
+                {"error": "Only superusers can create admin/superuser accounts."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        serializer = CustomUserSerializer(data=request.data, context={'request': request})
+        serializer = CustomUserSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -122,14 +123,15 @@ class UserListView(APIView):
 
         if role:
             if role == "superuser":
-                users = users.filter(is_superuser=True)
+                users = users.filter(user_type='superuser')
             elif role == "admin":
-                users = users.filter(is_app_admin=True)
+                users = users.filter(user_type='admin')
             elif role == "client":
-                users = users.filter(is_superuser=False, is_app_admin=False )
+                users = users.filter(user_type='client')  # Explicit clients only
+            elif role == "service_owner":
+                users = users.filter(user_type='service_owner')  # Explicit service owners
 
         serializer = CustomUserSerializer(users, many=True)
-
         return Response(serializer.data)
 
 
@@ -235,13 +237,15 @@ class UserProfileView(APIView):
         elif user.user_type == 'service_owner':
             try:
                 profile = user.service_owner_profile
+                if profile.status != 'approved':
+                    return Response(
+                        {"error": "Your account is pending approval"}, 
+                        status=status.HTTP_403_FORBIDDEN
+                    )
                 serializer = ServiceOwnerProfileSerializer(profile)
-                return Response(serializer.data, status=status.HTTP_200_OK)
+                return Response(serializer.data)
             except ServiceOwner.DoesNotExist:
-                return Response({'error': 'Service owner profile not found.'}, status=status.HTTP_404_NOT_FOUND)
-
-        else:
-            return Response({'error': 'Invalid user type.'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "Profile not found"}, status=status.HTTP_404_NOT_FOUND)
 
 class UserDetailView(APIView):
     permission_classes = [IsAuthenticated]
@@ -276,89 +280,45 @@ class UserDetailView(APIView):
 
 
 
-class PendingServiceOwnersView(generics.ListAPIView):
-    permission_classes = [IsAppAdmin]  # Your existing permission
-    serializer_class = ServiceOwnerProfileSerializer
-    
-    def get_queryset(self):
-        return ServiceOwner.objects.filter(is_approved=False)
-
 class ApproveServiceOwnerView(APIView):
-    permission_classes = [IsAppAdmin]
-    
-    def post(self, request, pk):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, user_id):
         try:
-            service_owner = ServiceOwner.objects.get(pk=pk)
-            service_owner.is_approved = True
+            service_owner = ServiceOwner.objects.get(user_id=user_id)
+            service_owner.status = 'approved'
             service_owner.save()
-            
-            # Send approval email
-            self.send_approval_email(service_owner)
-            
             return Response({"status": "approved"}, status=status.HTTP_200_OK)
         except ServiceOwner.DoesNotExist:
             return Response({"error": "Service owner not found"}, status=status.HTTP_404_NOT_FOUND)
-    
-    def send_approval_email(self, service_owner):
-        subject = f'Your {service_owner.business_name} Has Been Approved!'
-        message = f"""
-        Congratulations {service_owner.user.username}!
-        
-        Your business, {service_owner.business_name}, has been approved.
-        You can now log in and start using all platform features.
-        
-        Get started by completing your profile and adding your services.
-        
-        Thank you,
-        The Platform Team
-        """
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [service_owner.user.email],
-            fail_silently=False,
-        )
 
-class RejectServiceOwnerView(APIView):
-    permission_classes = [IsAppAdmin]
-    
-    def post(self, request, pk):
-        try:
-            service_owner = ServiceOwner.objects.get(pk=pk)
-            reason = request.data.get('reason', '')
-            service_owner.admin_notes = reason
-            service_owner.save()
-            
-            # Send rejection email
-            self.send_rejection_email(service_owner, reason)
-            
-            # Optionally delete or keep the record
-            # service_owner.delete()
-            
-            return Response({"status": "rejected"}, status=status.HTTP_200_OK)
-        except ServiceOwner.DoesNotExist:
-            return Response({"error": "Service owner not found"}, status=status.HTTP_404_NOT_FOUND)
-    
-    def send_rejection_email(self, service_owner, reason):
-        subject = f'Regarding Your {service_owner.business_name} Application'
-        message = f"""
-        Hello {service_owner.user.username},
-        
-        After careful review, we're unable to approve your business, {service_owner.business_name}, at this time.
-        
-        Reason: {reason}
-        
-        You may correct these issues and reapply if you wish.
-        Contact support if you have any questions.
-        
-        Best regards,
-        The Platform Team
-        """
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [service_owner.user.email],
-            fail_silently=False,
-        )
+# views.py
+from rest_framework.decorators import action
+from rest_framework.viewsets import ModelViewSet
+
+class ServiceOwnerAdminViewSet(ModelViewSet):
+    queryset = ServiceOwner.objects.all()
+    serializer_class = ServiceOwnerProfileSerializer
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=True, methods=['patch'])
+    def approve(self, request, pk=None):
+        service_owner = self.get_object()
+        service_owner.status = 'approved'
+        service_owner.save()
+        return Response({'status': 'approved'})
+
+    @action(detail=True, methods=['patch'])
+    def reject(self, request, pk=None):
+        service_owner = self.get_object()
+        service_owner.status = 'rejected'
+        service_owner.rejection_reason = request.data.get('reason', '')
+        service_owner.save()
+        return Response({'status': 'rejected'})
+
+    def get_queryset(self):
+        status = self.request.query_params.get('status')
+        queryset = super().get_queryset()
+        if status:
+            queryset = queryset.filter(status=status)
+        return queryset

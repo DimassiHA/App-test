@@ -27,20 +27,17 @@ const AdminLogin = () => {
       const response = await axios.post("/token/", { username, password });
       const decoded = jwtDecode(response.data.access);
 
-      if (decoded.is_superuser || decoded.is_app_admin) {
+      // Check if the user_type is either 'admin' or 'superuser'
+      if (decoded.user_type === "admin" || decoded.user_type === "superuser") {
         localStorage.setItem("adminAccessToken", response.data.access);
         localStorage.setItem("adminRefreshToken", response.data.refresh);
         navigate("/admin/dashboard");
       } else {
-        setError("You are not an admin. Access denied.");
+        setError("You are not an admin or superuser. Access denied.");
       }
     } catch (err) {
-      setError("Invalid credentials or not an admin.");
       console.error("Login error:", err.response?.data);
-
-
-      setError("Invalid credentials "); // Display error message
-
+      setError("Invalid credentials");
     }
   };
 

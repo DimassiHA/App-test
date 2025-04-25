@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+
 import AdminLogin from "./components/Admin/AdminLogin";
 import Dashboard from "./components/Admin/Dashboard";
 import ClientRegistrationForm from './components/Client/ClientRegistrationForm';
@@ -14,6 +15,7 @@ import UserProfile from "./components/UserProfile";
 
 import Profile from "./components/Admin/Profile";
 import EditProfile from "./components/Admin/EditProfile";
+import ServiceOwnerApproval from "./components/Admin/SOApproval";
 
 
 
@@ -23,8 +25,9 @@ function App() {
       <Route path="/admin" element={<AdminLogin />} />
       <Route path="/admin/dashboard" element={<Dashboard />} />
       <Route path="*" element={<Navigate to="/admin" />} />
-
+      <Route path="/admin/SOApproval" element={<ServiceOwnerApproval />} />
       <Route path="/admin/profile" element={<Profile />} />
+      
 
 
 

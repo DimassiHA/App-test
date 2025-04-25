@@ -22,24 +22,29 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_app_admin', True)
+        extra_fields.setdefault('user_type', 'superuser')
         return self.create_user(username, email, password, **extra_fields)
 
 
 USER_TYPES = (
     ('client', 'Client'),
     ('service_owner', 'Service Owner'),
-    )
+    ('admin', 'Admin'),
+    ('superuser', 'Superuser'),
+)
 
 class CustomUser(AbstractUser):
     phone_number = models.IntegerField(null=True, blank=True)
     region = models.CharField(max_length=100, null=True, blank=True)
     birth_date = models.DateField(null=True, blank=True)
-    is_app_admin = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
     objects = CustomUserManager()
     def __str__(self):
         return self.username
     user_type = models.CharField(max_length=20, choices=USER_TYPES, default='client')
+    @property
+    def is_app_admin(self):
+        return self.user_type in ['admin', 'superuser']
 
 class Client(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name="client_profile")
@@ -47,19 +52,21 @@ class Client(models.Model):
     profile_picture = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)
     def __str__(self):
         return f"Client: {self.user.username}"
-
-
 class ServiceOwner(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name="service_owner_profile")
     business_name = models.CharField(max_length=255)
     profile_picture = models.ImageField(upload_to='service_owner_profiles/', null=True, blank=True)
-    description = models.TextField()
-    is_approved = models.BooleanField(default=False)  # New field
-    admin_notes = models.TextField(null=True, blank=True)  # For rejection reasons
+    description= models.TextField()
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    rejection_reason = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return f"Service Owner: {self.user.username} - {self.business_name} ({'Approved' if self.is_approved else 'Pending'})"
-
+        return f"Service Owner: {self.user.username} - {self.business_name}"
 
 class ServicePicture(models.Model):
     service_owner = models.ForeignKey(ServiceOwner, on_delete=models.CASCADE, related_name="service_pictures")

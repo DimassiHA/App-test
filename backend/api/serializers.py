@@ -9,10 +9,9 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
-
+        token['user_type'] = user.user_type
         token['is_superuser'] = user.is_superuser
-        token['is_app_admin'] = user.is_app_admin
-
+        token['is_app_admin'] = user.user_type in ['admin', 'superuser']  # Updated
         return token
 
 class CustomTokenObtainPairSerializer(MyTokenObtainPairSerializer):
@@ -25,30 +24,28 @@ class CustomTokenObtainPairSerializer(MyTokenObtainPairSerializer):
         data = super().validate(attrs)
         data['user_type'] = self.user.user_type
         return data
+
+
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['username', 'email', 'password', 'phone_number', 'region', 'birth_date', 'is_app_admin']
+        fields = ['username', 'email', 'password', 'phone_number', 'region', 'birth_date', 'user_type']
         extra_kwargs = {
             'password': {'write_only': True},
         }
 
     def create(self, validated_data):
-        # Access the request object from the context
-        request = self.context.get('request')
-        if not request:
-            raise serializers.ValidationError("Request object not found in context.")
+        password = validated_data.pop('password', None)
+        user_type = validated_data.get('user_type', 'client')
 
-        # Only superusers can set is_app_admin
-        if request.user.is_superuser:
-            validated_data['is_app_admin'] = validated_data.get('is_app_admin', False)
-        else:
-            validated_data['is_app_admin'] = False 
+        # Create the user
+        user = CustomUser.objects.create(**validated_data)
+        if password:
+            user.set_password(password)
+            user.save()
 
-        user = CustomUser.objects.create_user(**validated_data)
         return user
     def update(self, instance, validated_data):
-        # Handle partial updates
         instance.username = validated_data.get('username', instance.username)
         instance.email = validated_data.get('email', instance.email)
         instance.phone_number = validated_data.get('phone_number', instance.phone_number)
@@ -56,7 +53,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
         instance.birth_date = validated_data.get('birth_date', instance.birth_date)
         instance.save()
         return instance
-    
+
 class CustomUserBaseSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
@@ -83,10 +80,10 @@ class CustomUserBaseSerializer(serializers.ModelSerializer):
 class ServicePictureSerializer(serializers.ModelSerializer):
     class Meta:
         model = ServicePicture
-        fields = ['image', 'uploaded_at'] 
+        fields = ['image', 'uploaded_at']
 class ServiceOwnerProfileSerializer(serializers.ModelSerializer):
-    user = CustomUserBaseSerializer()  # Nested serializer for user fields
-    service_pictures = ServicePictureSerializer(many=True, read_only=True)  # Serialize related service pictures
+    user = CustomUserBaseSerializer()
+    service_pictures = ServicePictureSerializer(many=True, read_only=True)
 
     class Meta:
         model = ServiceOwner
@@ -95,7 +92,7 @@ class ServiceOwnerProfileSerializer(serializers.ModelSerializer):
 
 class ClientRegisterSerializer(serializers.ModelSerializer):
     gender = serializers.ChoiceField(choices=(('male', 'Male'), ('female', 'Female')),write_only=True)
-    profile_picture = serializers.ImageField(required=False,use_url=True)
+    profile_picture = serializers.ImageField(required=False)
 
     class Meta:
         model = CustomUser
@@ -109,25 +106,20 @@ class ClientRegisterSerializer(serializers.ModelSerializer):
         Client.objects.create(user=user, gender=gender , profile_picture=profile_picture)  # Create associated Client profile
         return user
 
-# Modify ServiceOwnerRegisterSerializer
 class ServiceOwnerRegisterSerializer(serializers.ModelSerializer):
-<<<<<<< HEAD
-    # ... [keep existing fields] ...
-    
-=======
-    profile_picture = serializers.ImageField(required=False,use_url=True)
+    profile_picture = serializers.ImageField(required=False)
     business_name = serializers.CharField()
     description = serializers.CharField()
     service_pictures = serializers.ListField(
-        child=serializers.ImageField(use_url=True),
+        child=serializers.ImageField(),
         write_only=True,
         required=True
     )
     class Meta:
         model = CustomUser
         fields = [
-            'first_name', 'last_name', 'username', 'email', 'password', 
-            'phone_number', 'region', 'birth_date', 'profile_picture', 
+            'first_name', 'last_name', 'username', 'email', 'password',
+            'phone_number', 'region', 'birth_date', 'profile_picture',
             'business_name', 'description', 'service_pictures'
         ]
         extra_kwargs = {'password': {'write_only': True}}
@@ -137,63 +129,27 @@ class ServiceOwnerRegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("At least one service picture is required.")
         return value
 
->>>>>>> 610df490a5c70d3a699d790cd5d468332d39eb3c
     def create(self, validated_data):
         profile_picture = validated_data.pop('profile_picture', None)
         business_name = validated_data.pop('business_name')
         description = validated_data.pop('description')
         service_pictures = validated_data.pop('service_pictures')
-        
-        # Create user with is_approved=False by default
         user = CustomUser.objects.create_user(**validated_data, user_type='service_owner')
-        
         service_owner = ServiceOwner.objects.create(
             user=user,
             profile_picture=profile_picture,
             business_name=business_name,
             description=description,
-            is_approved=False  # Default to not approved
+            status='pending'
         )
-        
-        # Save service pictures
         for picture in service_pictures:
             ServicePicture.objects.create(service_owner=service_owner, image=picture)
-        
-        # Send pending approval email
-        self.send_pending_email(user, business_name)
-        
         return user
-<<<<<<< HEAD
-
-    def send_pending_email(self, user, business_name):
-        from django.core.mail import send_mail
-        subject = f'Your {business_name} Application is Under Review'
-        message = f"""
-        Hello {user.username},
-        
-        Thank you for registering your business, {business_name}, on our platform.
-        Your application is currently under review by our admin team.
-        
-        You will receive another email once your application has been processed.
-        This typically takes 1-3 business days.
-        
-        If you have any questions, please contact support.
-        
-        Best regards,
-        The Platform Team
-        """
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [user.email],
-            fail_silently=False,
-        )
 
 
 
-=======
->>>>>>> 610df490a5c70d3a699d790cd5d468332d39eb3c
+
+
 class LoginSerializer(serializers.Serializer):
 
     username = serializers.CharField(max_length=255)
@@ -212,6 +168,7 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError('User does not exist')
 
         return attrs
+
 class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
@@ -223,3 +180,4 @@ class PasswordResetVerifySerializer(serializers.Serializer):
 class PasswordResetChangeSerializer(serializers.Serializer):
     token = serializers.CharField()
     new_password = serializers.CharField(write_only=True)
+
