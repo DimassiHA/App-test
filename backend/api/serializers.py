@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import CustomUser ,Client ,ServiceOwner, ServicePicture
+from .models import CustomUser ,Client ,ServiceOwner, ServicePicture , EventType
 from django.contrib.auth.hashers import make_password
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -181,3 +181,8 @@ class PasswordResetChangeSerializer(serializers.Serializer):
     token = serializers.CharField()
     new_password = serializers.CharField(write_only=True)
 
+
+class EventTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EventType
+        fields = ['id', 'name', 'description', 'created_at', 'updated_at']

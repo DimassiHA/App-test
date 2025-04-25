@@ -10,12 +10,12 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from rest_framework import status
-from .models import CustomUser , PasswordResetToken
+from .models import CustomUser , PasswordResetToken, EventType
 from .serializers import  MyTokenObtainPairSerializer, PasswordResetRequestSerializer, PasswordResetVerifySerializer,CustomTokenObtainPairSerializer
 import logging
 from django.conf import settings
 
-from .serializers import CustomUserSerializer ,ClientRegisterSerializer,ServiceOwnerRegisterSerializer,ClientProfileSerializer,ServiceOwnerProfileSerializer
+from .serializers import CustomUserSerializer ,ClientRegisterSerializer,ServiceOwnerRegisterSerializer,ClientProfileSerializer,ServiceOwnerProfileSerializer , EventTypeSerializer
 
 from rest_framework import status , generics
 
@@ -61,7 +61,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
 class IsAppAdmin(BasePermission):
     def has_permission(self, request, view):
-        return bool(request.user and request.user.user_type == 'admin')
+        return bool(request.user and request.user.user_type in ['admin', 'superuser'])
 class IsSuperuser(BasePermission):
     def has_permission(self, request, view):
         return bool(request.user and request.user.user_type == 'superuser')
@@ -321,4 +321,17 @@ class ServiceOwnerAdminViewSet(ModelViewSet):
         queryset = super().get_queryset()
         if status:
             queryset = queryset.filter(status=status)
+        return queryset
+
+# views.py (add to the end)
+class EventTypeViewSet(viewsets.ModelViewSet):
+    queryset = EventType.objects.all()
+    serializer_class = EventTypeSerializer
+    permission_classes = [IsAuthenticated, IsAppAdmin]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        name = self.request.query_params.get('name')
+        if name:
+            queryset = queryset.filter(name__icontains=name)
         return queryset

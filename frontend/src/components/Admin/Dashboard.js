@@ -4,7 +4,7 @@ import axios from "../../api";
 import { jwtDecode } from "jwt-decode";
 import "./Dashboard.css";
 import { Link } from "react-router-dom";
-import { FaUserCircle, FaUserPlus } from "react-icons/fa";
+import { FaUserCircle, FaUserPlus , FaCalendarAlt } from "react-icons/fa";
 
 const Dashboard = () => {
   const [error, setError] = useState("");
@@ -75,12 +75,21 @@ const Dashboard = () => {
               <span>Create User</span>
             </button>
           )}
-          
+
+
+              <button 
+                onClick={() => navigate('/admin/event-types')} 
+                className="action-button"
+              >
+                <FaCalendarAlt size={18} />
+                <span>Manage Event Types</span>
+              </button>
+
             <button onClick={navigateToSOApproval} className="create-user-button">
               <FaUserPlus size={18} />
               <span>ServiceOwnerApproval</span>
             </button>
-          
+
           <button onClick={handleLogout} className="logout-button">
             Logout
           </button>

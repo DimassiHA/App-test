@@ -17,7 +17,7 @@ import Profile from "./components/Admin/Profile";
 import EditProfile from "./components/Admin/EditProfile";
 import ServiceOwnerApproval from "./components/Admin/SOApproval";
 import AddUser from "./components/Admin/AddUser";
-
+import EventTypesManagement from "./components/Admin/EventTypesManagement";
 
 
 function App() {
@@ -29,6 +29,7 @@ function App() {
       <Route path="/admin/SOApproval" element={<ServiceOwnerApproval />} />
       <Route path="/admin/add-user" element={<AddUser />} />
       <Route path="/admin/profile" element={<Profile />} />
+      <Route path="/admin/event-types" element={<EventTypesManagement />} />
       
 
 

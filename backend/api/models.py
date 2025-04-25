@@ -105,3 +105,13 @@ class PasswordResetToken(models.Model):
         if not self.expires_at:
             self.expires_at = timezone.now() + timedelta(minutes=15)  # 15 min expiry
         super().save(*args, **kwargs)
+
+
+class EventType(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name

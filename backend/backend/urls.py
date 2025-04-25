@@ -4,14 +4,14 @@ from django.contrib import admin
 from rest_framework.routers import DefaultRouter
 
 
-from api.views import MyTokenObtainPairView, PasswordResetRequestView, PasswordResetVerifyView,CustomTokenObtainPairView , ServiceOwnerAdminViewSet
+from api.views import MyTokenObtainPairView, PasswordResetRequestView, PasswordResetVerifyView,CustomTokenObtainPairView , ServiceOwnerAdminViewSet , EventTypeViewSet
 
 
 from api.views import AdminLoginView , CreateUserView , ClientRegistrationView , ServiceOwnerRegistrationView , UserListView ,CustomLoginView,UserProfileView, UserDetailView
 
 
 router = DefaultRouter()
-
+router.register(r'admin/event-types', EventTypeViewSet, basename='event-types')
 
 urlpatterns = [
 
@@ -43,6 +43,16 @@ urlpatterns = [
     path('api/admin/service-owners/<int:pk>/reject/', ServiceOwnerAdminViewSet.as_view({
         'patch': 'reject'
     }), name='service-owner-reject'),
+    path('api/admin/event-types/', EventTypeViewSet.as_view({
+        'get': 'list',
+        'post': 'create'
+    }), name='event-type-list'),
+    path('api/admin/event-types/<int:pk>/', EventTypeViewSet.as_view({
+        'get': 'retrieve',
+        'put': 'update',
+        'patch': 'partial_update',
+        'delete': 'destroy'
+    }), name='event-type-detail'),
 
     #CLIENT URLS
     path('api/register/client/', ClientRegistrationView.as_view(), name='client_register'),
