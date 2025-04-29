@@ -118,6 +118,19 @@ class PasswordResetToken(models.Model):
         super().save(*args, **kwargs)
 
 
+class Event(models.Model):
+    client = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='events')
+    name = models.CharField(max_length=255)
+    date = models.DateField()
+    location = models.CharField(max_length=255)
+    description = models.TextField()
+    event_type = models.ForeignKey(EventType, on_delete=models.SET_NULL, null=True)
+    budget = models.DecimalField(max_digits=10, decimal_places=2)
+    guests = models.PositiveIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
+    def __str__(self):
+        return f"{self.name} - {self.date}"
 
 

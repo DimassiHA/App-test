@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "../../api";
+import API from "../../api";
 import { jwtDecode } from "jwt-decode";
 import "./Profile.css";
 
@@ -21,7 +21,7 @@ const EditProfile = () => {
     const fetchProfile = async () => {
       console.log("Starting profile fetch..."); // Debug 1
       try {
-        const token = localStorage.getItem("adminAccessToken");
+        const token = localStorage.getItem("accessToken");
         console.log("Token found:", !!token); // Debug 2
         
         if (!token) {
@@ -33,11 +33,7 @@ const EditProfile = () => {
         const decoded = jwtDecode(token);
         console.log("Decoded token user ID:", decoded.user_id); // Debug 4
   
-        const response = await axios.get(`/admin/users/${decoded.user_id}/`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await API.get(`/admin/users/${decoded.user_id}/`);
         console.log("API response received:", response.data); // Debug 5
   
         setFormData({
@@ -73,19 +69,13 @@ const EditProfile = () => {
     setSuccess("");
     
     try {
-      const token = localStorage.getItem("adminAccessToken");
+      const token = localStorage.getItem("accessToken");
       const decoded = jwtDecode(token);
       
       // Remove the response assignment since we're not using it
-      await axios.patch(
+      await API.patch(
         `/admin/users/${decoded.user_id}/`, 
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
+        formData
       );
   
       setSuccess("Profile updated successfully!");

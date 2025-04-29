@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from "../../api";
+import API from "../../api";
 import { Table, Button, Tag, message, Modal, Input, Spin } from 'antd';
 import { useNavigate } from "react-router-dom";
 
@@ -15,11 +15,9 @@ const ServiceOwnerApproval = () => {
   const fetchPendingOwners = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`/admin/service-owners/`, {
+      const response = await API.get(`/admin/service-owners/`, {
         params: { status: 'pending' },
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('adminAccessToken')}`
-        }
+
       });
       console.log("Full raw API response:", response.data);
       console.log("Fetched owners:", response.data);
@@ -61,11 +59,8 @@ const ServiceOwnerApproval = () => {
   
     setActionLoading(true);
     try {
-      await axios.patch(
-        `/admin/service-owners/${id}/approve/`,
-        {},
-        { headers: { Authorization: `Bearer ${localStorage.getItem('adminAccessToken')}` } }
-      );
+      await API.patch(
+        `/admin/service-owners/${id}/approve/`);
       message.success('Service owner approved successfully');
       fetchPendingOwners();
     } catch (error) {
@@ -84,14 +79,9 @@ const ServiceOwnerApproval = () => {
 
     setActionLoading(true);
     try {
-      await axios.patch(
+      await API.patch(
         `/admin/service-owners/${currentOwner.id}/reject/`,
         { reason: rejectReason },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('adminAccessToken')}`
-          }
-        }
       );
       message.success('Service owner rejected successfully');
       setIsModalVisible(false);

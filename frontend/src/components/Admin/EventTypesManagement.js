@@ -1,6 +1,6 @@
 // EventTypesManagement.js
 import React, { useState, useEffect } from 'react';
-import axios from '../../api';
+import API from '../../api';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 
 const EventTypesManagement = () => {
@@ -18,11 +18,7 @@ const EventTypesManagement = () => {
   const fetchEventTypes = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get('/admin/event-types/', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('adminAccessToken')}`,
-        },
-      });
+      const response = await API.get('/admin/event-types/');
       setEventTypes(response.data);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to fetch event types');
@@ -34,11 +30,7 @@ const EventTypesManagement = () => {
 
   const handleCreate = async () => {
     try {
-      const response = await axios.post('/admin/event-types/', newEventType, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('adminAccessToken')}`,
-        },
-      });
+      const response = await API.post('/admin/event-types/', newEventType);
       setEventTypes([...eventTypes, response.data]);
       setNewEventType({ name: '', description: '' });
     } catch (err) {
@@ -49,11 +41,7 @@ const EventTypesManagement = () => {
   const handleUpdate = async (id) => {
     try {
       const eventTypeToUpdate = eventTypes.find(et => et.id === id);
-      await axios.put(`/admin/event-types/${id}/`, eventTypeToUpdate, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('adminAccessToken')}`,
-        },
-      });
+      await API.put(`/admin/event-types/${id}/`, eventTypeToUpdate);
       setEditingId(null);
       fetchEventTypes();
     } catch (err) {
@@ -63,11 +51,7 @@ const EventTypesManagement = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`/admin/event-types/${id}/`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('adminAccessToken')}`,
-        },
-      });
+      await API.delete(`/admin/event-types/${id}/`);
       setEventTypes(eventTypes.filter(et => et.id !== id));
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to delete event type');

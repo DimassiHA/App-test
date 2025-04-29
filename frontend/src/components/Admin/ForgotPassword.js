@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from '../../api';
+import API from '../../api';
 import { useNavigate } from 'react-router-dom';
 import './ForgotPassword.css';
 
@@ -15,7 +15,7 @@ const ForgotPassword = () => {
   const handleRequest = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('/password-reset/request/', { email });
+      const response = await API.post('/password-reset/request/', { email });
       setMessage(response.data.message);
       setStep(2);
       setError('');
@@ -27,7 +27,7 @@ const ForgotPassword = () => {
   const handleVerify = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('/password-reset/verify/', {
+      const response = await API.post('/password-reset/verify/', {
         email,
         token,
         new_password: newPassword

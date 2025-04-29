@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "../../api";
+import API from "../../api";
 import { jwtDecode } from "jwt-decode";
 import "./Dashboard.css";
 import { Link } from "react-router-dom";
@@ -14,12 +14,25 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem("adminAccessToken");
-
+    const token = localStorage.getItem("accessToken");
+    const fetchUsers = async () => {
+      setIsLoading(true);
+      try {
+        const response = await API.get("/Admin/users/");
+        setUsers(response.data);
+      } catch (err) {
+        console.error("Error fetching users:", err.response?.data);
+        setError(err.response?.data?.message || "Failed to fetch users. Please try again.");
+        if (err.response?.status === 401) {
+          navigate("/admin");
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+  
     if (token) {
       const decoded = jwtDecode(token);
-      console.log("Decoded Token:", decoded);
-
       if (decoded.user_type === "superuser") {
         setIsSuperuser(true);
         fetchUsers();
@@ -29,32 +42,22 @@ const Dashboard = () => {
     }
   }, [navigate]);
 
-  const fetchUsers = async () => {
-    setIsLoading(true);
-    try {
-      const response = await axios.get("/Admin/users/", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("adminAccessToken")}`,
-        },
-      });
-      setUsers(response.data);
-    } catch (err) {
-      console.error("Error fetching users:", err.response?.data);
-      setError(err.response?.data?.message || "Failed to fetch users. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleLogout = () => {
-    localStorage.removeItem("adminAccessToken");
-    localStorage.removeItem("adminRefreshToken");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
     navigate("/admin");
   };
 
   const navigateToCreateUser = () => {
     navigate("/admin/add-user");
   };
+
+
+
+
+
+
 
   const navigateToSOApproval = () => {
     navigate("/admin/SOApproval")

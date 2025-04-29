@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import axios from "../api";
+import api from "../api";
 import { useNavigate } from 'react-router-dom';
 import './login.css'; 
 
 const Login = () => {
   const navigate = useNavigate();  
-
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -15,29 +14,34 @@ const Login = () => {
     setError("");
 
     try {
-      const response = await axios.post("/custom-token/", { username, password });
+      const response = await api.post("/custom-token/", { username, password });
 
+      // Store tokens consistently
       localStorage.setItem("accessToken", response.data.access);
       localStorage.setItem("refreshToken", response.data.refresh);
+      
+      // Store user info
+      localStorage.setItem("userType", response.data.user_type);
+      localStorage.setItem("username", response.data.username);
 
-      const userType = response.data.user_type;
-      const userName = response.data.username;
-      localStorage.setItem("userType", userType);
-      localStorage.setItem("username", userName);
-
-      if (userType === 'client') {
-        navigate("/client/dashboard");
-      } else if (userType === 'service_owner') {
-        navigate("/service-owner/dashboard");
-      } else if (userType === 'admin') {
-        navigate("/admin/dashboard");
-      } else {
-        setError("Unknown user type.");
+      // Redirect based on user type
+      switch(response.data.user_type) {
+        case 'client':
+          navigate("/client/dashboard");
+          break;
+        case 'service_owner':
+          navigate("/service-owner/dashboard");
+          break;
+        case 'admin':
+          navigate("/admin/dashboard");
+          break;
+        default:
+          setError("Unknown user type.");
       }
 
     } catch (err) {
       console.error("Login error:", err.response?.data);
-      setError("Invalid credentials. Please try again.");
+      setError(err.response?.data?.detail || "Invalid credentials. Please try again.");
     }
   };
 

@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import CustomUser ,Client ,ServiceOwner, ServicePicture , EventType
+from .models import CustomUser ,Client ,ServiceOwner, ServicePicture , EventType , Event
 from django.contrib.auth.hashers import make_password
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -11,7 +11,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         token = super().get_token(user)
         token['user_type'] = user.user_type
         token['is_superuser'] = user.is_superuser
-        token['is_app_admin'] = user.user_type in ['admin', 'superuser']  # Updated
+        token['is_app_admin'] = user.user_type in ['admin', 'superuser']
         return token
 
 class CustomTokenObtainPairSerializer(MyTokenObtainPairSerializer):
@@ -197,3 +197,14 @@ class PasswordResetChangeSerializer(serializers.Serializer):
 
 
 
+class EventSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Event
+        fields = ['id', 'name', 'date', 'location', 'description', 
+                 'event_type', 'budget', 'guests', 'created_at']
+        read_only_fields = ['client']
+
+    def create(self, validated_data):
+        # Automatically set the client to the current user
+        validated_data['client'] = self.context['request'].user
+        return super().create(validated_data)

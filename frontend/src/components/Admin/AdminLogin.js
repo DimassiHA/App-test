@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "../../api";
+import API from "../../api";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./AdminLogin.css";
 import { jwtDecode } from "jwt-decode";
@@ -24,13 +24,13 @@ const AdminLogin = () => {
     setError("");
 
     try {
-      const response = await axios.post("/token/", { username, password });
+      const response = await API.post("/token/", { username, password });
       const decoded = jwtDecode(response.data.access);
 
-      // Check if the user_type is either 'admin' or 'superuser'
+
       if (decoded.user_type === "admin" || decoded.user_type === "superuser") {
-        localStorage.setItem("adminAccessToken", response.data.access);
-        localStorage.setItem("adminRefreshToken", response.data.refresh);
+        localStorage.setItem("accessToken", response.data.access);
+        localStorage.setItem("refreshToken", response.data.refresh);
         navigate("/admin/dashboard");
       } else {
         setError("You are not an admin or superuser. Access denied.");

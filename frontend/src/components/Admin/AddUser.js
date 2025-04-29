@@ -1,6 +1,6 @@
 import React, { useState , useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "../../api";
+import API from "../../api";
 import { jwtDecode } from "jwt-decode";
 import "./Dashboard.css";
 
@@ -23,7 +23,7 @@ const AddUser = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem("adminAccessToken");
+    const token = localStorage.getItem("accessToken");
 
     if (token) {
       const decoded = jwtDecode(token);
@@ -74,12 +74,7 @@ const AddUser = () => {
     try {
       setIsLoading(true);
       const { confirmPassword, ...userData } = formData;
-      
-      const response = await axios.post("/Admin/create-user/", userData, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("adminAccessToken")}`,
-        },
-      });
+      const response = await API.post("/Admin/create-user/", userData);
   
       if (response.status === 201) {
         alert("User created successfully!");

@@ -4,14 +4,15 @@ from django.contrib import admin
 from rest_framework.routers import DefaultRouter
 
 
-from api.views import MyTokenObtainPairView, PasswordResetRequestView, PasswordResetVerifyView,CustomTokenObtainPairView , ServiceOwnerAdminViewSet , EventTypeViewSet
+from api.views import MyTokenObtainPairView, PasswordResetRequestView, PasswordResetVerifyView,CustomTokenObtainPairView , ServiceOwnerAdminViewSet , EventTypeViewSet , EventViewSet , ServiceOwnerFilterView
 
 
-from api.views import AdminLoginView , CreateUserView , ClientRegistrationView , ServiceOwnerRegistrationView , UserListView ,CustomLoginView,UserProfileView, UserDetailView
+from api.views import AdminLoginView , CreateUserView , ClientRegistrationView , ServiceOwnerRegistrationView , UserListView ,CustomLoginView,UserProfileView, UserDetailView , ClientEventTypeListView
 
 
 router = DefaultRouter()
 router.register(r'admin/event-types', EventTypeViewSet, basename='event-types')
+router.register(r'events', EventViewSet, basename='events')
 
 urlpatterns = [
 
@@ -56,6 +57,8 @@ urlpatterns = [
 
     #CLIENT URLS
     path('api/register/client/', ClientRegistrationView.as_view(), name='client_register'),
+    path('api/service-owners/', ServiceOwnerFilterView.as_view(), name='service-owners-filter'),
+    path('api/event-types/', ClientEventTypeListView.as_view(), name='client-event-types'),
 
     #SERVICE_OWNER URLS
     path('api/register/service-owner/', ServiceOwnerRegistrationView.as_view(), name='service_owner_register'),

@@ -10,8 +10,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from rest_framework import status
-from .models import CustomUser , PasswordResetToken, EventType
-from .serializers import  MyTokenObtainPairSerializer, PasswordResetRequestSerializer, PasswordResetVerifySerializer,CustomTokenObtainPairSerializer
+from .models import CustomUser , PasswordResetToken, EventType , Event 
+from .serializers import  MyTokenObtainPairSerializer, PasswordResetRequestSerializer, PasswordResetVerifySerializer,CustomTokenObtainPairSerializer , EventSerializer
 import logging
 from django.conf import settings
 
@@ -323,7 +323,7 @@ class ServiceOwnerAdminViewSet(ModelViewSet):
             queryset = queryset.filter(status=status)
         return queryset
 
-# views.py (add to the end)
+
 class EventTypeViewSet(viewsets.ModelViewSet):
     queryset = EventType.objects.all()
     serializer_class = EventTypeSerializer
@@ -335,3 +335,52 @@ class EventTypeViewSet(viewsets.ModelViewSet):
         if name:
             queryset = queryset.filter(name__icontains=name)
         return queryset
+
+
+class EventViewSet(viewsets.ModelViewSet):
+    queryset = Event.objects.all()
+    serializer_class = EventSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return self.queryset.filter(client=self.request.user)
+
+    def perform_create(self, serializer):
+        # Automatically set the client to the current user
+        serializer.save(client=self.request.user)
+
+class ClientEventTypeListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        print(f"User: {request.user}")
+        print(f"Auth header: {request.headers.get('Authorization')}")
+        print(f"Authenticated: {request.user.is_authenticated}") 
+        event_types = EventType.objects.all()
+        serializer = EventTypeSerializer(event_types, many=True)
+        return Response(serializer.data)
+
+class ServiceOwnerFilterView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        event_type_id = request.query_params.get('event_type')
+        if not event_type_id:
+            return Response(
+                {"error": "event_type parameter is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            service_owners = ServiceOwner.objects.filter(
+                event_types__id=event_type_id,
+                status='approved'
+            ).select_related('user').prefetch_related('event_types')
+
+            serializer = ServiceOwnerProfileSerializer(service_owners, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )

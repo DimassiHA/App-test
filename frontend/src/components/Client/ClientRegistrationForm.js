@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from "../../api";
+import API from "../../api";
 import { useNavigate } from 'react-router-dom';
 import "../Register.css";// You'll define styles here
 
@@ -49,9 +49,7 @@ const ClientRegistrationForm = () => {
         }
 
         try {
-            const response = await axios.post('/register/client/', data, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-            });
+            await API.post('/register/client/', data);
             setMessage('Registration successful!');
             navigate('/login');
 

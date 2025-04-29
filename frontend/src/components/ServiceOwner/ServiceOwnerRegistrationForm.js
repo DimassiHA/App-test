@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from "../../api";
+import API from "../../api";
 import { useNavigate } from 'react-router-dom';
 import "../Register.css";
 
@@ -26,11 +26,10 @@ const ServiceOwnerRegistrationForm = () => {
     const [eventTypes, setEventTypes] = useState([]);
     const navigate = useNavigate();
 
-    // Fetch event types on component mount
     useEffect(() => {
         const fetchEventTypes = async () => {
             try {
-                const response = await axios.get('/admin/event-types/');
+                const response = await API.get('/admin/event-types/');
                 setEventTypes(response.data);
             } catch (error) {
                 console.error('Error fetching event types:', error);
@@ -95,9 +94,7 @@ const ServiceOwnerRegistrationForm = () => {
         }
 
         try {
-            const response = await axios.post('/register/service-owner/', data, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-            });
+            const response = await API.post('/register/service-owner/', data);
             setMessage('Registration successful!');
             console.log("Response from backend:", response.data);
             navigate('/login');

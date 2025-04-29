@@ -1,4 +1,3 @@
-#Creating a custom authentication system where users can login using email,phone nulber or username (in the same field)
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.models import User
 from .models import CustomUser
@@ -17,8 +16,7 @@ class EmailOrPhoneNumberBackend(ModelBackend):
                 user = CustomUser.objects.get(username=username)
         except CustomUser.DoesNotExist:
             return None
-        
-        # Check if the password is correct
+
         if user.check_password(password):
             return user
         return None

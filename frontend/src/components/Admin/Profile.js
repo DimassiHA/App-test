@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "../../api";
+import API from "../../api";
 import { jwtDecode } from "jwt-decode";
 import "./Profile.css";
 
@@ -20,18 +20,14 @@ const Profile = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const token = localStorage.getItem("adminAccessToken");
+        const token = localStorage.getItem("accessToken");
         if (!token) {
           navigate("/admin?message=Please log in first");
           return;
         }
 
         const decoded = jwtDecode(token);
-        const response = await axios.get(`/admin/users/${decoded.user_id}/`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await API.get(`/admin/users/${decoded.user_id}/`);
 
         setUserData({
           username: response.data.username,
