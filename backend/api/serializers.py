@@ -19,10 +19,38 @@ class CustomTokenObtainPairSerializer(MyTokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
         token['user_type'] = user.user_type
+        
+        if user.user_type == 'service_owner':
+            try:
+                service_owner = user.service_owner_profile
+                token['service_owner_status'] = service_owner.status
+                if service_owner.status == 'rejected':
+                    token['rejection_reason'] = service_owner.rejection_reason
+            except ServiceOwner.DoesNotExist:
+                pass
+                
         return token
+
     def validate(self, attrs):
         data = super().validate(attrs)
-        data['user_type'] = self.user.user_type
+        user = self.user
+        
+        if user.user_type == 'service_owner':
+            try:
+                service_owner = user.service_owner_profile
+                if service_owner.status == 'pending':
+                    raise serializers.ValidationError(
+                        'Your account is pending approval. Please wait for admin approval.'
+                    )
+                elif service_owner.status == 'rejected':
+                    rejection_reason = service_owner.rejection_reason or "No reason provided"
+                    raise serializers.ValidationError(
+                        f'Your account has been rejected. Reason: {rejection_reason}. Please contact support.'
+                    )
+            except ServiceOwner.DoesNotExist:
+                raise serializers.ValidationError('Service owner profile not found')
+        
+        data['user_type'] = user.user_type
         return data
 
 
@@ -165,7 +193,6 @@ class ServiceOwnerRegisterSerializer(serializers.ModelSerializer):
 
 
 class LoginSerializer(serializers.Serializer):
-
     username = serializers.CharField(max_length=255)
     password = serializers.CharField(write_only=True)
 
@@ -173,11 +200,27 @@ class LoginSerializer(serializers.Serializer):
         username = attrs.get('username')
         password = attrs.get('password')
 
-        
         try:
-            user = CustomUser.objects.get(username=username)  
+            user = CustomUser.objects.get(username=username)
+            
             if not user.check_password(password):
                 raise serializers.ValidationError('Invalid password')
+            
+            if user.user_type == 'service_owner':
+                try:
+                    service_owner = user.service_owner_profile
+                    if service_owner.status == 'pending':
+                        raise serializers.ValidationError(
+                            'Your account is pending approval. Please wait for admin approval.'
+                        )
+                    elif service_owner.status == 'rejected':
+                        rejection_reason = service_owner.rejection_reason or "No reason provided"
+                        raise serializers.ValidationError(
+                            f'Your account has been rejected. Reason: {rejection_reason}. Please contact support.'
+                        )
+                except ServiceOwner.DoesNotExist:
+                    raise serializers.ValidationError('Service owner profile not found')
+                
         except CustomUser.DoesNotExist:
             raise serializers.ValidationError('User does not exist')
 

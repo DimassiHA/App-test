@@ -10,7 +10,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from rest_framework import status
-from .models import CustomUser , PasswordResetToken, EventType , Event 
+from .models import CustomUser , PasswordResetToken, EventType , Event
 from .serializers import  MyTokenObtainPairSerializer, PasswordResetRequestSerializer, PasswordResetVerifySerializer,CustomTokenObtainPairSerializer , EventSerializer
 import logging
 from django.conf import settings

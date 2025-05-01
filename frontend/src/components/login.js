@@ -12,18 +12,16 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
-
+  
     try {
       const response = await api.post("/custom-token/", { username, password });
-
-      // Store tokens consistently
+  
+      // Store tokens and user info
       localStorage.setItem("accessToken", response.data.access);
       localStorage.setItem("refreshToken", response.data.refresh);
-      
-      // Store user info
       localStorage.setItem("userType", response.data.user_type);
       localStorage.setItem("username", response.data.username);
-
+  
       // Redirect based on user type
       switch(response.data.user_type) {
         case 'client':
@@ -38,10 +36,23 @@ const Login = () => {
         default:
           setError("Unknown user type.");
       }
-
+  
     } catch (err) {
       console.error("Login error:", err.response?.data);
-      setError(err.response?.data?.detail || "Invalid credentials. Please try again.");
+      
+      // Handle different error cases
+      if (err.response?.data?.non_field_errors) {
+        const errorMsg = err.response.data.non_field_errors[0];
+        setError(errorMsg);
+      } else if (err.response?.data?.detail) {
+        setError(err.response.data.detail);
+      } else {
+        setError("Login failed. Please try again.");
+      }
+      
+      // Clear tokens on any error
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
     }
   };
 

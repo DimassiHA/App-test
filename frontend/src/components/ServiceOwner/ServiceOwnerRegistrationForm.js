@@ -42,17 +42,7 @@ const ServiceOwnerRegistrationForm = () => {
     const nextStep = () => setCurrentStep(currentStep + 1);
     const prevStep = () => setCurrentStep(currentStep - 1);
 
-    const handleChange = (e) => {
-        const { name, value, files } = e.target;
 
-        if (name === 'profile_picture') {
-            setFormData({ ...formData, [name]: files[0] });
-        } else if (name === 'service_pictures') {
-            setFormData({ ...formData, [name]: files });
-        } else {
-            setFormData({ ...formData, [name]: value });
-        }
-    };
 
     const handleEventTypeChange = (e) => {
         const options = e.target.options;
@@ -65,42 +55,70 @@ const ServiceOwnerRegistrationForm = () => {
         setFormData({ ...formData, event_types: selectedValues });
     };
 
+    const handleChange = (e) => {
+        const { name, value, files } = e.target;
+    
+        if (name === 'profile_picture') {
+            // For single file upload
+            setFormData({ ...formData, [name]: files[0] });  // Store the File object directly
+        } else if (name === 'service_pictures') {
+            // For multiple file uploads
+            setFormData({ ...formData, [name]: Array.from(files) });  // Convert FileList to array
+        } else {
+            setFormData({ ...formData, [name]: value });
+        }
+    };
+    
     const handleSubmit = async (e) => {
         e.preventDefault();
-
+    
         if (formData.password !== formData.password_confirmation) {
             setMessage('Passwords do not match!');
             return;
         }
-
+    
         if (formData.event_types.length === 0) {
             setMessage('Please select at least one event type!');
             return;
         }
-
+    
         const data = new FormData();
-        for (const key in formData) {
-            if (key === "service_pictures") {
-                for (let i = 0; i < formData.service_pictures.length; i++) {
-                    data.append('service_pictures', formData.service_pictures[i]);
-                }
-            } else if (key === "event_types") {
-                formData.event_types.forEach(type => {
-                    data.append('event_types', type);
+    
+        // Append all fields to FormData
+        Object.keys(formData).forEach(key => {
+            if (key === 'profile_picture' && formData[key]) {
+                // Append single file
+                data.append(key, formData[key]);
+            } else if (key === 'service_pictures' && formData[key]) {
+                // Append each file in the array individually
+                formData[key].forEach(file => {
+                    data.append(key, file);
                 });
-            } else {
+            } else if (key === 'event_types') {
+                // Append each event type individually
+                formData[key].forEach(type => {
+                    data.append(key, type);
+                });
+            } else if (formData[key] !== null && formData[key] !== undefined) {
+                // Append regular fields
                 data.append(key, formData[key]);
             }
-        }
-
+        });
+    
         try {
-            const response = await API.post('/register/service-owner/', data);
+            await API.post('/register/service-owner/', data, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
             setMessage('Registration successful!');
-            console.log("Response from backend:", response.data);
             navigate('/login');
         } catch (error) {
-            setMessage(error.response?.data?.message || 'Registration failed. Please try again.');
-            console.error(error.response?.data);
+            const errorMsg = error.response?.data?.message || 
+                            Object.values(error.response?.data || {}).flat().join(' ') || 
+                            'Registration failed. Please try again.';
+            setMessage(errorMsg);
+            console.error('Registration error:', error.response?.data);
         }
     };
 

@@ -184,8 +184,6 @@ const AddUser = () => {
               onChange={handleInputChange}
               required
             >
-              <option value="client">Client</option>
-              <option value="service_owner">Service Owner</option>
               <option value="admin">Admin</option>
               <option value="superuser">Superuser</option>
             </select>
