@@ -57,7 +57,7 @@ urlpatterns = [
 
     #CLIENT URLS
     path('api/register/client/', ClientRegistrationView.as_view(), name='client_register'),
-    path('api/service-owners/', ServiceOwnerFilterView.as_view(), name='service-owners-filter'),
+    path('api/service-owners/filter/', ServiceOwnerFilterView.as_view(), name='service-owners-filter'),
     path('api/event-types/', ClientEventTypeListView.as_view(), name='client-event-types'),
 
     #SERVICE_OWNER URLS

@@ -54,6 +54,11 @@ class CustomTokenObtainPairSerializer(MyTokenObtainPairSerializer):
         return data
 
 
+class EventTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EventType
+        fields = ['id', 'name', 'description', 'created_at', 'updated_at']
+
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
@@ -112,10 +117,12 @@ class ServicePictureSerializer(serializers.ModelSerializer):
 class ServiceOwnerProfileSerializer(serializers.ModelSerializer):
     user = CustomUserBaseSerializer()
     service_pictures = ServicePictureSerializer(many=True, read_only=True)
+    event_types = EventTypeSerializer(many=True, read_only=True)
 
     class Meta:
         model = ServiceOwner
-        fields = ['id', 'user', 'business_name', 'profile_picture', 'description', 'service_pictures']
+        fields = ['id', 'user', 'business_name', 'profile_picture', 
+                 'description', 'service_pictures', 'event_types', 'status']
 
 
 class ClientRegisterSerializer(serializers.ModelSerializer):
@@ -134,10 +141,6 @@ class ClientRegisterSerializer(serializers.ModelSerializer):
         Client.objects.create(user=user, gender=gender , profile_picture=profile_picture)  # Create associated Client profile
         return user
 
-class EventTypeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = EventType
-        fields = ['id', 'name', 'description', 'created_at', 'updated_at']
 
 class ServiceOwnerRegisterSerializer(serializers.ModelSerializer):
     profile_picture = serializers.ImageField(required=False)

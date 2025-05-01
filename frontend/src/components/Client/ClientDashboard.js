@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../../api';
+import API from '../../api';
 import './ClientDashboard.css';
 
 const ClientDashboard = () => {
@@ -29,7 +29,7 @@ const ClientDashboard = () => {
           return;
         }
 
-        const response = await api.get('/event-types/');
+        const response = await API.get('/event-types/');
         setEventTypes(response.data);
       } catch (error) {
         console.error('Error fetching event types:', error);
@@ -53,21 +53,49 @@ const ClientDashboard = () => {
   const handleCreateEvent = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/events/', {
+      // 1. Create the event
+      const eventResponse = await API.post('/events/', {
         ...eventData,
         event_type: parseInt(eventData.event_type)
       });
-
-      const ownersResponse = await api.get('/service-owners/', {
-        params: {
-          event_type: eventData.event_type
-        }
-      });
-      setServiceOwners(ownersResponse.data);
+      
+      console.log('Event created:', eventResponse.data);
+  
+      // 2. Fetch matching service owners
+      try {
+        const ownersResponse = await API.get('/service-owners/filter/', {
+          params: {
+            event_type: eventData.event_type
+          }
+        });
+        console.log('Service owners:', ownersResponse.data);
+        setServiceOwners(ownersResponse.data);
+      } catch (filterError) {
+        console.error('Error fetching service owners:', filterError);
+        setError('Found matching service owners but could not load details');
+      }
+  
       setShowEventForm(false);
-    } catch (error) {
-      console.error('Error creating event:', error);
-      setError('Failed to create event');
+    } catch (eventError) {
+      console.error('Error creating event:', eventError);
+      setError('Failed to create event. Please try again.');
+      
+      // If token expired, try to refresh
+      if (eventError.response?.status === 401) {
+        try {
+          const refreshToken = localStorage.getItem('refreshToken');
+          const refreshResponse = await API.post('/token/refresh/', {
+            refresh: refreshToken
+          });
+          
+          localStorage.setItem('accessToken', refreshResponse.data.access);
+          // Retry the original request
+          handleCreateEvent(e);
+        } catch (refreshError) {
+          console.error('Refresh failed:', refreshError);
+          navigate('/login');
+        }
+      }
     }
   };
 
