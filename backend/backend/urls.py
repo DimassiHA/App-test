@@ -1,5 +1,5 @@
 from django.urls import path, include
-from rest_framework_simplejwt.views import TokenRefreshView 
+from rest_framework_simplejwt.views import TokenRefreshView
 from django.contrib import admin
 from rest_framework.routers import DefaultRouter
 
@@ -59,6 +59,7 @@ urlpatterns = [
     path('api/register/client/', ClientRegistrationView.as_view(), name='client_register'),
     path('api/service-owners/filter/', ServiceOwnerFilterView.as_view(), name='service-owners-filter'),
     path('api/event-types/', ClientEventTypeListView.as_view(), name='client-event-types'),
+    
 
     #SERVICE_OWNER URLS
     path('api/register/service-owner/', ServiceOwnerRegistrationView.as_view(), name='service_owner_register'),
