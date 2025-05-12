@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from '../api';
+import API from '../api';
 import './UserProfile.css';
 const UserProfile = () => {
   const [profile, setProfile] = useState(null);
@@ -10,11 +10,7 @@ const UserProfile = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await axios.get("/profile/", {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
+        const response = await API.get("/profile/");
 
         setProfile(response.data);
       } catch (err) {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../../api';
+import API from '../../api';
 import './ClientDashboard.css';
 
 const ClientDashboard = () => {
@@ -29,7 +29,7 @@ const ClientDashboard = () => {
           return;
         }
 
-        const response = await api.get('/event-types/');
+        const response = await API.get('/event-types/');
         setEventTypes(response.data);
       } catch (error) {
         console.error('Error fetching event types:', error);
@@ -53,21 +53,27 @@ const ClientDashboard = () => {
   const handleCreateEvent = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/events/', {
+      // 1. Create the event
+      await API.post('/events/', {
         ...eventData,
-        event_type: parseInt(eventData.event_type)
+        event_type: parseInt(eventData.event_type),
+        budget: parseFloat(eventData.budget),
+        guests: parseInt(eventData.guests)
       });
-
-      const ownersResponse = await api.get('/service-owners/', {
+      // 2. Find matching service owners with budget and capacity filters
+      const ownersResponse = await API.get('/service-owners/filter/', {
         params: {
-          event_type: eventData.event_type
+          event_type: eventData.event_type,
+          min_budget: eventData.budget * 0.9,  // 10% below client's budget
+          max_budget: eventData.budget * 1.1,  // 10% above client's budget
+          capacity: eventData.guests           // Required capacity
         }
       });
       setServiceOwners(ownersResponse.data);
       setShowEventForm(false);
     } catch (error) {
       console.error('Error creating event:', error);
-      setError('Failed to create event');
+      setError(error.response?.data?.message || 'Failed to create event');
     }
   };
 
@@ -109,7 +115,6 @@ const ClientDashboard = () => {
                   required
                 />
               </div>
-              
               <div className="form-group">
                 <label>Date</label>
                 <input
@@ -120,7 +125,6 @@ const ClientDashboard = () => {
                   required
                 />
               </div>
-              
               <div className="form-group">
                 <label>Location</label>
                 <input
@@ -131,7 +135,6 @@ const ClientDashboard = () => {
                   required
                 />
               </div>
-              
               <div className="form-group">
                 <label>Event Type</label>
                 <select
@@ -148,7 +151,6 @@ const ClientDashboard = () => {
                   ))}
                 </select>
               </div>
-              
               <div className="form-group">
                 <label>Budget</label>
                 <input
@@ -159,7 +161,6 @@ const ClientDashboard = () => {
                   required
                 />
               </div>
-              
               <div className="form-group">
                 <label>Number of Guests</label>
                 <input
@@ -170,7 +171,6 @@ const ClientDashboard = () => {
                   required
                 />
               </div>
-              
               <div className="form-group">
                 <label>Description</label>
                 <textarea
@@ -180,7 +180,6 @@ const ClientDashboard = () => {
                   required
                 />
               </div>
-              
               <div className="form-buttons">
                 <button type="submit" className="submit-button">
                   Create Event
@@ -197,25 +196,37 @@ const ClientDashboard = () => {
           </div>
         </div>
       )}
-
       {serviceOwners.length > 0 && (
-        <div className="service-owners-section">
-          <h2>Recommended Service Owners</h2>
-          <div className="service-owners-grid">
-            {serviceOwners.map(owner => (
-              <div key={owner.id} className="service-owner-card">
-                <h3>{owner.business_name}</h3>
-                <p>{owner.description}</p>
-                <p>Specializes in: {owner.event_types.map(et => et.name).join(', ')}</p>
-                <button
-                  onClick={() => navigate(`/service-owner/${owner.id}`)}
-                  className="view-profile-button"
-                >
-                  View Profile
-                </button>
+        <div className="service-owner-list">
+          {serviceOwners.map(owner => (
+            <div key={owner.id} className="service-owner-card">
+              <h3>{owner.business_name}</h3>
+              <img
+                src={owner.profile_picture || '/default-profile.jpg'}
+                alt={owner.business_name}
+                className="owner-avatar"
+              />
+              <p>{owner.description}</p>
+
+              <div className="owner-details">
+                <p><strong>Price Range:</strong> ${owner.min_budget} - ${owner.max_budget}</p>
+                {owner.max_capacity && (
+                  <p><strong>Max Capacity:</strong> {owner.max_capacity} people</p>
+                )}
+                <p>
+                  <strong>Specializes in:</strong>{' '}
+                  {owner.event_types?.map(et => et.name).join(', ') || 'N/A'}
+                </p>
               </div>
-            ))}
-          </div>
+
+              <button
+                onClick={() => navigate(`/service-owner/${owner.id}`)}
+                className="view-profile-button"
+              >
+                View Full Profile
+              </button>
+            </div>
+          ))}
         </div>
       )}
     </div>

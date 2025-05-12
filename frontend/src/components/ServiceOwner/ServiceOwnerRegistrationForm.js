@@ -17,6 +17,9 @@ const ServiceOwnerRegistrationForm = () => {
         description: '',
         service_pictures: [],
         event_types: [],
+        min_budget: '',
+        max_budget: '',
+        max_capacity: '',
         password: '',
         password_confirmation: '',
     });
@@ -42,8 +45,6 @@ const ServiceOwnerRegistrationForm = () => {
     const nextStep = () => setCurrentStep(currentStep + 1);
     const prevStep = () => setCurrentStep(currentStep - 1);
 
-
-
     const handleEventTypeChange = (e) => {
         const options = e.target.options;
         const selectedValues = [];
@@ -59,11 +60,9 @@ const ServiceOwnerRegistrationForm = () => {
         const { name, value, files } = e.target;
     
         if (name === 'profile_picture') {
-            // For single file upload
-            setFormData({ ...formData, [name]: files[0] });  // Store the File object directly
+            setFormData({ ...formData, [name]: files[0] });
         } else if (name === 'service_pictures') {
-            // For multiple file uploads
-            setFormData({ ...formData, [name]: Array.from(files) });  // Convert FileList to array
+            setFormData({ ...formData, [name]: Array.from(files) });
         } else {
             setFormData({ ...formData, [name]: value });
         }
@@ -72,6 +71,7 @@ const ServiceOwnerRegistrationForm = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
     
+        // Validation checks
         if (formData.password !== formData.password_confirmation) {
             setMessage('Passwords do not match!');
             return;
@@ -82,27 +82,44 @@ const ServiceOwnerRegistrationForm = () => {
             return;
         }
     
+        if (parseFloat(formData.min_budget) >= parseFloat(formData.max_budget)) {
+            setMessage('Maximum budget must be greater than minimum budget');
+            return;
+        }
+    
         const data = new FormData();
     
-        // Append all fields to FormData
-        Object.keys(formData).forEach(key => {
-            if (key === 'profile_picture' && formData[key]) {
-                // Append single file
-                data.append(key, formData[key]);
-            } else if (key === 'service_pictures' && formData[key]) {
-                // Append each file in the array individually
-                formData[key].forEach(file => {
-                    data.append(key, file);
-                });
-            } else if (key === 'event_types') {
-                // Append each event type individually
-                formData[key].forEach(type => {
-                    data.append(key, type);
-                });
-            } else if (formData[key] !== null && formData[key] !== undefined) {
-                // Append regular fields
-                data.append(key, formData[key]);
-            }
+        // Append user fields
+        const userFields = [
+            'first_name', 'last_name', 'username', 'email', 
+            'phone_number', 'region', 'birth_date', 'password'
+        ];
+        userFields.forEach(field => {
+            data.append(field, formData[field]);
+        });
+    
+        // Append files
+        if (formData.profile_picture) {
+            data.append('profile_picture', formData.profile_picture);
+        }
+        if (formData.service_pictures.length > 0) {
+            formData.service_pictures.forEach(file => {
+                data.append('service_pictures', file);
+            });
+        }
+    
+        // Append ServiceOwner fields
+        data.append('business_name', formData.business_name);
+        data.append('description', formData.description);
+        data.append('min_budget', formData.min_budget);
+        data.append('max_budget', formData.max_budget);
+        if (formData.max_capacity) {
+            data.append('max_capacity', formData.max_capacity);
+        }
+    
+        // Append event types
+        formData.event_types.forEach(type => {
+            data.append('event_types', type);
         });
     
         try {
@@ -231,6 +248,47 @@ const ServiceOwnerRegistrationForm = () => {
                                 onChange={handleChange}
                                 required
                             />
+                            
+                            <div className="budget-fields">
+                                <h4>Service Pricing</h4>
+                                <div className="budget-inputs">
+                                    <input
+                                        type="number"
+                                        name="min_budget"
+                                        placeholder="Minimum Budget"
+                                        value={formData.min_budget}
+                                        onChange={handleChange}
+                                        min="0"
+                                        step="0.01"
+                                        required
+                                    />
+                                    <span>to</span>
+                                    <input
+                                        type="number"
+                                        name="max_budget"
+                                        placeholder="Maximum Budget"
+                                        value={formData.max_budget}
+                                        onChange={handleChange}
+                                        min="0"
+                                        step="0.01"
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="capacity-field">
+                                <h4>Capacity (Optional)</h4>
+                                <input
+                                    type="number"
+                                    name="max_capacity"
+                                    placeholder="Maximum number of people served"
+                                    value={formData.max_capacity}
+                                    onChange={handleChange}
+                                    min="1"
+                                />
+                                <small>Leave blank if not applicable to your service</small>
+                            </div>
+
                             <label>Service Pictures (Upload at least one)</label>
                             <input
                                 type="file"

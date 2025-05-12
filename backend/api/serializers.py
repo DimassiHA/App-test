@@ -1,9 +1,14 @@
 from rest_framework import serializers
-
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-
 from .models import CustomUser ,Client ,ServiceOwner, ServicePicture , EventType , Event
 from django.contrib.auth.hashers import make_password
+
+
+
+
+
+
+# 1. Authentication Serializers
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
@@ -19,7 +24,6 @@ class CustomTokenObtainPairSerializer(MyTokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
         token['user_type'] = user.user_type
-        
         if user.user_type == 'service_owner':
             try:
                 service_owner = user.service_owner_profile
@@ -28,13 +32,10 @@ class CustomTokenObtainPairSerializer(MyTokenObtainPairSerializer):
                     token['rejection_reason'] = service_owner.rejection_reason
             except ServiceOwner.DoesNotExist:
                 pass
-                
         return token
-
     def validate(self, attrs):
         data = super().validate(attrs)
         user = self.user
-        
         if user.user_type == 'service_owner':
             try:
                 service_owner = user.service_owner_profile
@@ -49,163 +50,19 @@ class CustomTokenObtainPairSerializer(MyTokenObtainPairSerializer):
                     )
             except ServiceOwner.DoesNotExist:
                 raise serializers.ValidationError('Service owner profile not found')
-        
         data['user_type'] = user.user_type
         return data
-
-
-class CustomUserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CustomUser
-        fields = ['username', 'email', 'password', 'phone_number', 'region', 'birth_date', 'user_type']
-        extra_kwargs = {
-            'password': {'write_only': True},
-        }
-
-    def create(self, validated_data):
-        password = validated_data.pop('password', None)
-        user_type = validated_data.get('user_type', 'client')
-
-        # Create the user
-        user = CustomUser.objects.create(**validated_data)
-        if password:
-            user.set_password(password)
-            user.save()
-
-        return user
-    def update(self, instance, validated_data):
-        instance.username = validated_data.get('username', instance.username)
-        instance.email = validated_data.get('email', instance.email)
-        instance.phone_number = validated_data.get('phone_number', instance.phone_number)
-        instance.region = validated_data.get('region', instance.region)
-        instance.birth_date = validated_data.get('birth_date', instance.birth_date)
-        instance.save()
-        return instance
-
-class CustomUserBaseSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CustomUser
-        fields = ['first_name', 'last_name', 'username', 'email', 'phone_number', 'region', 'birth_date']
-
-class ClientProfileSerializer(serializers.ModelSerializer):
-    user = CustomUserBaseSerializer()
-    class Meta:
-        model = Client
-        fields = ['user', 'gender', 'profile_picture']
-
-
-class CustomUserBaseSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CustomUser
-        fields = ['first_name', 'last_name', 'username', 'email', 'phone_number', 'region', 'birth_date']
-    def create(self, validated_data):
-        password = validated_data.pop('password')
-        user = CustomUser.objects.create(**validated_data)
-        user.password = make_password(password)
-        user.save()
-        return user
-
-class ServicePictureSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ServicePicture
-        fields = ['image', 'uploaded_at']
-class ServiceOwnerProfileSerializer(serializers.ModelSerializer):
-    user = CustomUserBaseSerializer()
-    service_pictures = ServicePictureSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = ServiceOwner
-        fields = ['id', 'user', 'business_name', 'profile_picture', 'description', 'service_pictures']
-
-
-class ClientRegisterSerializer(serializers.ModelSerializer):
-    gender = serializers.ChoiceField(choices=(('male', 'Male'), ('female', 'Female')),write_only=True)
-    profile_picture = serializers.ImageField(required=False)
-
-    class Meta:
-        model = CustomUser
-        fields = ['first_name', 'last_name','username', 'email', 'password', 'phone_number',"region","birth_date","gender",'profile_picture']
-        extra_kwargs = {'password': {'write_only': True}}
-
-    def create(self, validated_data):
-        gender = validated_data.pop('gender')  # Extract gender for Client model
-        profile_picture = validated_data.pop('profile_picture', None)
-        user = CustomUser.objects.create_user(**validated_data, user_type='client')
-        Client.objects.create(user=user, gender=gender , profile_picture=profile_picture)  # Create associated Client profile
-        return user
-
-class EventTypeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = EventType
-        fields = ['id', 'name', 'description', 'created_at', 'updated_at']
-
-class ServiceOwnerRegisterSerializer(serializers.ModelSerializer):
-    profile_picture = serializers.ImageField(required=False)
-    business_name = serializers.CharField()
-    description = serializers.CharField()
-    service_pictures = serializers.ListField(
-        child=serializers.ImageField(),
-        write_only=True,
-        required=True
-    )
-    event_types = serializers.PrimaryKeyRelatedField(
-        many=True,
-        queryset=EventType.objects.all(),
-        required=True
-    )
-
-    class Meta:
-        model = CustomUser
-        fields = [
-            'first_name', 'last_name', 'username', 'email', 'password',
-            'phone_number', 'region', 'birth_date', 'profile_picture',
-            'business_name', 'description', 'service_pictures', 'event_types'
-        ]
-        extra_kwargs = {'password': {'write_only': True}}
-
-    def validate_event_types(self, value):
-        if len(value) < 1:
-            raise serializers.ValidationError("At least one event type is required.")
-        return value
-
-    def create(self, validated_data):
-        print("Received data:", validated_data.keys())
-        profile_picture = validated_data.pop('profile_picture', None)
-        business_name = validated_data.pop('business_name')
-        description = validated_data.pop('description')
-        service_pictures = validated_data.pop('service_pictures')
-        event_types = validated_data.pop('event_types')
-        user = CustomUser.objects.create_user(**validated_data, user_type='service_owner')
-        service_owner = ServiceOwner.objects.create(
-            user=user,
-            profile_picture=profile_picture,
-            business_name=business_name,
-            description=description,
-            status='pending'
-        )
-        service_owner.event_types.set(event_types)
-        
-        for picture in service_pictures:
-            ServicePicture.objects.create(service_owner=service_owner, image=picture)
-        return user
-
-
-
 
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=255)
     password = serializers.CharField(write_only=True)
-
     def validate(self, attrs):
         username = attrs.get('username')
         password = attrs.get('password')
-
         try:
             user = CustomUser.objects.get(username=username)
-            
             if not user.check_password(password):
                 raise serializers.ValidationError('Invalid password')
-            
             if user.user_type == 'service_owner':
                 try:
                     service_owner = user.service_owner_profile
@@ -220,11 +77,16 @@ class LoginSerializer(serializers.Serializer):
                         )
                 except ServiceOwner.DoesNotExist:
                     raise serializers.ValidationError('Service owner profile not found')
-                
         except CustomUser.DoesNotExist:
             raise serializers.ValidationError('User does not exist')
-
         return attrs
+
+
+
+
+
+
+# 2. Password Reset Serializers
 
 class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -240,14 +102,206 @@ class PasswordResetChangeSerializer(serializers.Serializer):
 
 
 
+
+
+# 3. User Profile Serializers
+
+class CustomUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['username', 'email', 'password', 'phone_number', 'region', 'birth_date', 'user_type']
+        extra_kwargs = {
+            'password': {'write_only': True},
+        }
+    def create(self, validated_data):
+        password = validated_data.pop('password', None)
+        user_type = validated_data.get('user_type', 'client')
+        user = CustomUser.objects.create(**validated_data)
+        if password:
+            user.set_password(password)
+            user.save()
+        return user
+    def update(self, instance, validated_data):
+        instance.username = validated_data.get('username', instance.username)
+        instance.email = validated_data.get('email', instance.email)
+        instance.phone_number = validated_data.get('phone_number', instance.phone_number)
+        instance.region = validated_data.get('region', instance.region)
+        instance.birth_date = validated_data.get('birth_date', instance.birth_date)
+        instance.save()
+        return instance
+
+class CustomUserBaseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['first_name', 'last_name', 'username', 'email', 'phone_number', 'region', 'birth_date']
+    def create(self, validated_data):
+        password = validated_data.pop('password')
+        user = CustomUser.objects.create(**validated_data)
+        user.password = make_password(password)
+        user.save()
+        return user
+
+
+
+# 4. Client-Related Serializers
+
+class ClientProfileSerializer(serializers.ModelSerializer):
+    user = CustomUserBaseSerializer()
+    class Meta:
+        model = Client
+        fields = ['user', 'gender', 'profile_picture']
+
+class ClientRegisterSerializer(serializers.ModelSerializer):
+    gender = serializers.ChoiceField(choices=(('male', 'Male'), ('female', 'Female')),write_only=True)
+    profile_picture = serializers.ImageField(required=False)
+    class Meta:
+        model = CustomUser
+        fields = ['first_name', 'last_name','username', 'email', 'password', 'phone_number',"region","birth_date","gender",'profile_picture']
+        extra_kwargs = {'password': {'write_only': True}}
+    def create(self, validated_data):
+        gender = validated_data.pop('gender')  # Extract gender for Client model
+        profile_picture = validated_data.pop('profile_picture', None)
+        user = CustomUser.objects.create_user(**validated_data, user_type='client')
+        Client.objects.create(user=user, gender=gender , profile_picture=profile_picture)  # Create associated Client profile
+        return user
+
+
+
+
+# 5. Event-Related Serializers
+
+
+
+class EventTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EventType
+        fields = ['id', 'name', 'description', 'created_at', 'updated_at']
+
 class EventSerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
-        fields = ['id', 'name', 'date', 'location', 'description', 
+        fields = ['id', 'name', 'date', 'location', 'description',
                  'event_type', 'budget', 'guests', 'created_at']
         read_only_fields = ['client']
-
     def create(self, validated_data):
-        # Automatically set the client to the current user
         validated_data['client'] = self.context['request'].user
         return super().create(validated_data)
+
+
+
+
+
+
+
+
+# 6. Service Owner-Related Serializers
+
+class ServicePictureSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ServicePicture
+        fields = ['image', 'uploaded_at']
+
+class ServiceOwnerProfileSerializer(serializers.ModelSerializer):
+    user = CustomUserBaseSerializer()
+    service_pictures = ServicePictureSerializer(many=True, read_only=True)
+    event_types = EventTypeSerializer(many=True, read_only=True)
+    is_available = serializers.SerializerMethodField()
+    min_budget = serializers.DecimalField(max_digits=10, decimal_places=2)
+    max_budget = serializers.DecimalField(max_digits=10, decimal_places=2)
+    max_capacity = serializers.IntegerField(allow_null=True)
+    class Meta:
+        model = ServiceOwner
+        fields = [
+            'id', 'user', 'business_name', 'profile_picture',
+            'description', 'service_pictures', 'event_types',
+            'status', 'is_available',
+            'min_budget', 'max_budget', 'max_capacity'
+        ]
+        read_only_fields = ['status', 'created_at', 'updated_at']
+    def get_is_available(self, obj):
+        request = self.context.get('request')
+        if request and request.query_params.get('date'):
+            return True
+        return None
+
+class ServiceOwnerRegisterSerializer(serializers.ModelSerializer):
+    profile_picture = serializers.ImageField(required=False)
+    business_name = serializers.CharField()
+    description = serializers.CharField()
+    service_pictures = serializers.ListField(
+        child=serializers.ImageField(),
+        write_only=True,
+        required=True
+    )
+    event_types = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=EventType.objects.all(),
+        required=True
+    )
+    min_budget = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        required=True
+    )
+    max_budget = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        required=True
+    )
+    max_capacity = serializers.IntegerField(
+        min_value=1,
+        required=False,
+        allow_null=True
+    )
+
+    class Meta:
+        model = CustomUser
+        fields = [
+            'first_name', 'last_name', 'username', 'email', 'password',
+            'phone_number', 'region', 'birth_date', 'profile_picture',
+            'business_name', 'description', 'service_pictures', 'event_types',
+            'min_budget', 'max_budget', 'max_capacity'
+        ]
+        extra_kwargs = {'password': {'write_only': True}}
+    def validate_event_types(self, value):
+        if len(value) < 1:
+            raise serializers.ValidationError("At least one event type is required.")
+        return value
+    def validate(self, data):
+        if data['min_budget'] > data['max_budget']:
+            raise serializers.ValidationError(
+                "Maximum budget must be greater than minimum budget"
+            )
+        return data
+    def create(self, validated_data):
+        print("Received data:", validated_data.keys())
+        profile_picture = validated_data.pop('profile_picture', None)
+        business_name = validated_data.pop('business_name')
+        description = validated_data.pop('description')
+        service_pictures = validated_data.pop('service_pictures')
+        event_types = validated_data.pop('event_types')
+        min_budget = validated_data.pop('min_budget')
+        max_budget = validated_data.pop('max_budget')
+        max_capacity = validated_data.pop('max_capacity', None)
+        user = CustomUser.objects.create_user(**validated_data, user_type='service_owner')
+        service_owner = ServiceOwner.objects.create(
+            user=user,
+            profile_picture=profile_picture,
+            business_name=business_name,
+            description=description,
+            status='pending',
+            min_budget=min_budget,
+            max_budget=max_budget,
+            max_capacity=max_capacity
+        )
+        service_owner.event_types.set(event_types)
+        for picture in service_pictures:
+            ServicePicture.objects.create(service_owner=service_owner, image=picture)
+        return user
+
+
+
+
+
+
+

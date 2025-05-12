@@ -321,6 +321,16 @@ class ServiceOwnerAdminViewSet(ModelViewSet):
         queryset = super().get_queryset()
         if status:
             queryset = queryset.filter(status=status)
+        min_budget = self.request.query_params.get('min_budget')
+        max_budget = self.request.query_params.get('max_budget')
+        if min_budget:
+            queryset = queryset.filter(min_budget__gte=min_budget)
+        if max_budget:
+            queryset = queryset.filter(max_budget__lte=max_budget)
+        required_capacity = self.request.query_params.get('capacity')
+        if required_capacity:
+            queryset = queryset.filter(max_capacity__gte=required_capacity) | \
+                      queryset.filter(max_capacity__isnull=True)
         return queryset
 
 
@@ -360,11 +370,25 @@ class ClientEventTypeListView(APIView):
         serializer = EventTypeSerializer(event_types, many=True)
         return Response(serializer.data)
 
+from django.db import models
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from .models import ServiceOwner
+from .serializers import ServiceOwnerProfileSerializer
+
 class ServiceOwnerFilterView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        # Get and validate query parameters
         event_type_id = request.query_params.get('event_type')
+        min_budget = request.query_params.get('min_budget')
+        max_budget = request.query_params.get('max_budget')
+        required_capacity = request.query_params.get('capacity')
+
+        # Validate required parameters
         if not event_type_id:
             return Response(
                 {"error": "event_type parameter is required"},
@@ -372,15 +396,50 @@ class ServiceOwnerFilterView(APIView):
             )
 
         try:
+            # Convert parameters to appropriate types
+            event_type_id = int(event_type_id)
+            min_budget = float(min_budget) if min_budget else None
+            max_budget = float(max_budget) if max_budget else None
+            required_capacity = int(required_capacity) if required_capacity else None
+        except (ValueError, TypeError) as e:
+            return Response(
+                {"error": "Invalid parameter format. Ensure numeric values are provided."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            # Base queryset - approved owners for the event type
             service_owners = ServiceOwner.objects.filter(
                 event_types__id=event_type_id,
                 status='approved'
-            ).select_related('user').prefetch_related('event_types')
+            )
 
+            # Budget range filtering
+            if min_budget is not None and max_budget is not None:
+                if min_budget > max_budget:
+                    return Response(
+                        {"error": "min_budget cannot be greater than max_budget"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                service_owners = service_owners.filter(
+                    min_budget__lte=max_budget,  # Owner's min <= client's max
+                    max_budget__gte=min_budget   # Owner's max >= client's min
+                )
+
+            # Capacity filtering (include owners who don't specify capacity)
+            if required_capacity is not None:
+                service_owners = service_owners.filter(
+                    models.Q(max_capacity__gte=required_capacity) |
+                    models.Q(max_capacity__isnull=True)
+                )
+
+            service_owners = service_owners.select_related('user').prefetch_related('event_types')
             serializer = ServiceOwnerProfileSerializer(service_owners, many=True)
             return Response(serializer.data)
+            
         except Exception as e:
             return Response(
-                {"error": str(e)},
-                status=status.HTTP_400_BAD_REQUEST
+                {"error": f"An error occurred: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

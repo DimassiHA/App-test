@@ -75,6 +75,21 @@ class ServiceOwner(models.Model):
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
     rejection_reason = models.TextField(blank=True, null=True)
     event_types = models.ManyToManyField(EventType)
+    min_budget = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2,
+        help_text="Minimum price for this service"
+    )
+    max_budget = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2,
+        help_text="Maximum price for this service"
+    )
+    max_capacity = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Maximum number of people served (if applicable)"
+    )
 
     def __str__(self):
         return f"Service Owner: {self.user.username} - {self.business_name}"
