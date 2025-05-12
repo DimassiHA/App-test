@@ -1,5 +1,5 @@
 from django.urls import path, include
-from rest_framework_simplejwt.views import TokenRefreshView 
+from rest_framework_simplejwt.views import TokenRefreshView
 from django.contrib import admin
 from rest_framework.routers import DefaultRouter
 
@@ -29,9 +29,47 @@ urlpatterns = [
     path("api/Admin/login/", AdminLoginView.as_view(), name="admin_login"),
     path('api/Admin/create-user/', CreateUserView.as_view(), name='create-user'),
     path('api/Admin/users/', UserListView.as_view(), name='user-list'),
+<<<<<<< HEAD
     
     # Service Owner URLs
     path('api/service-owners/filter/', ServiceOwnerFilterView.as_view(), name='service-owners-filter'),
+=======
+    path('api/admin/users/<int:pk>/', UserDetailView.as_view(), name='user-detail'),
+    path('api/admin/service-owners/', ServiceOwnerAdminViewSet.as_view({
+        'get': 'list',
+        'post': 'create'
+    }), name='service-owner-list'),
+    path('api/admin/service-owners/<int:pk>/', ServiceOwnerAdminViewSet.as_view({
+        'get': 'retrieve',
+        'put': 'update',
+        'patch': 'partial_update',
+        'delete': 'destroy'
+    }), name='service-owner-detail'),
+    path('api/admin/service-owners/<int:pk>/approve/', ServiceOwnerAdminViewSet.as_view({
+        'patch': 'approve'
+    }), name='service-owner-approve'),
+    path('api/admin/service-owners/<int:pk>/reject/', ServiceOwnerAdminViewSet.as_view({
+        'patch': 'reject'
+    }), name='service-owner-reject'),
+    path('api/admin/event-types/', EventTypeViewSet.as_view({
+        'get': 'list',
+        'post': 'create'
+    }), name='event-type-list'),
+    path('api/admin/event-types/<int:pk>/', EventTypeViewSet.as_view({
+        'get': 'retrieve',
+        'put': 'update',
+        'patch': 'partial_update',
+        'delete': 'destroy'
+    }), name='event-type-detail'),
+
+    #CLIENT URLS
+    path('api/register/client/', ClientRegistrationView.as_view(), name='client_register'),
+    path('api/service-owners/filter/', ServiceOwnerFilterView.as_view(), name='service-owners-filter'),
+    path('api/event-types/', ClientEventTypeListView.as_view(), name='client-event-types'),
+    
+
+    #SERVICE_OWNER URLS
+>>>>>>> 86fc4022c57df0d24c53657ec6ab4dfc1f77fd6a
     path('api/register/service-owner/', ServiceOwnerRegistrationView.as_view(), name='service_owner_register'),
     
     # Client URLs

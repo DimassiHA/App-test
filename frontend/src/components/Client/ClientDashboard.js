@@ -53,27 +53,44 @@ const ClientDashboard = () => {
   const handleCreateEvent = async (e) => {
     e.preventDefault();
     try {
-      // 1. Create the event
-      await API.post('/events/', {
+      const eventResponse = await API.post('/events/', {
         ...eventData,
         event_type: parseInt(eventData.event_type),
         budget: parseFloat(eventData.budget),
         guests: parseInt(eventData.guests)
       });
-      // 2. Find matching service owners with budget and capacity filters
+
+      console.log('Event created:', eventResponse.data);
+
       const ownersResponse = await API.get('/service-owners/filter/', {
         params: {
           event_type: eventData.event_type,
-          min_budget: eventData.budget * 0.9,  // 10% below client's budget
-          max_budget: eventData.budget * 1.1,  // 10% above client's budget
-          capacity: eventData.guests           // Required capacity
+          min_budget: eventData.budget * 0.9,
+          max_budget: eventData.budget * 1.1,
+          capacity: eventData.guests
         }
       });
+
       setServiceOwners(ownersResponse.data);
       setShowEventForm(false);
-    } catch (error) {
-      console.error('Error creating event:', error);
-      setError(error.response?.data?.message || 'Failed to create event');
+    } catch (eventError) {
+      console.error('Error creating event:', eventError);
+      setError('Failed to create event. Please try again.');
+
+      if (eventError.response?.status === 401) {
+        try {
+          const refreshToken = localStorage.getItem('refreshToken');
+          const refreshResponse = await API.post('/token/refresh/', {
+            refresh: refreshToken
+          });
+
+          localStorage.setItem('accessToken', refreshResponse.data.access);
+          handleCreateEvent(e); // Retry
+        } catch (refreshError) {
+          console.error('Refresh failed:', refreshError);
+          navigate('/login');
+        }
+      }
     }
   };
 
@@ -85,17 +102,11 @@ const ClientDashboard = () => {
       <h1>Welcome to your Dashboard</h1>
 
       <div className="dashboard-actions">
-        <button
-          onClick={() => navigate('/profile')}
-          className="dashboard-button"
-        >
+        <button onClick={() => navigate('/profile')} className="dashboard-button">
           View Profile
         </button>
-        
-        <button
-          onClick={() => setShowEventForm(true)}
-          className="dashboard-button primary"
-        >
+
+        <button onClick={() => setShowEventForm(true)} className="dashboard-button primary">
           Create New Event
         </button>
       </div>
@@ -196,6 +207,7 @@ const ClientDashboard = () => {
           </div>
         </div>
       )}
+
       {serviceOwners.length > 0 && (
         <div className="service-owner-list">
           {serviceOwners.map(owner => (
@@ -207,7 +219,6 @@ const ClientDashboard = () => {
                 className="owner-avatar"
               />
               <p>{owner.description}</p>
-
               <div className="owner-details">
                 <p><strong>Price Range:</strong> ${owner.min_budget} - ${owner.max_budget}</p>
                 {owner.max_capacity && (
@@ -218,7 +229,6 @@ const ClientDashboard = () => {
                   {owner.event_types?.map(et => et.name).join(', ') || 'N/A'}
                 </p>
               </div>
-
               <button
                 onClick={() => navigate(`/service-owner/${owner.id}`)}
                 className="view-profile-button"
